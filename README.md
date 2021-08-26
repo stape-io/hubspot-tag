@@ -8,7 +8,7 @@ You can use this tag for the Google Tag Manager Server Side container for:
 
 ## How to use HubSpot tag
 
-TBD
+- [How to connect your site with Hubspot using server-side tracking](https://stape.io/how-to-connect-website-with-hubspot-using-server-side-tracking/)
 
 ## Open Source
 

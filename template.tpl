@@ -99,7 +99,19 @@ ___TEMPLATE_PARAMETERS___
     "name": "email",
     "displayName": "Email",
     "simpleValueType": true,
-    "help": "Email of visitor"
+    "help": "Email of visitor",
+    "valueValidators": [
+      {
+        "type": "NON_EMPTY",
+        "enablingConditions": [
+          {
+            "paramName": "type",
+            "paramValue": "createOrUpdateContact",
+            "type": "EQUALS"
+          }
+        ]
+      }
+    ]
   },
   {
     "type": "GROUP",
@@ -237,7 +249,13 @@ if (type === 'trackEventPageView') {
 
 
 function trackEventPageView() {
-  let url = 'https://track.hubspot.com/__ptq.gif?' + 'a=' + encodeUriComponent(data.accountId) + 'r=' + encodeUriComponent(eventData.page_referrer) + 't=' + encodeUriComponent(eventData.page_title) + 'pu=' + encodeUriComponent(eventData.page_location) + 'sd=' + encodeUriComponent(eventData.screen_resolution) + 'ct=' + encodeUriComponent('standard-page');
+  let url = 'https://track.hubspot.com/__ptq.gif?ct=' + encodeUriComponent('standard-page');
+
+  if (data.accountId) url + '&a=' + encodeUriComponent(data.accountId);
+  if (eventData.page_referrer) url + '&r=' + encodeUriComponent(eventData.page_referrer);
+  if (eventData.page_title) url + '&t=' + encodeUriComponent(eventData.page_title);
+  if (eventData.page_location) url + '&pu=' + encodeUriComponent(eventData.page_location);
+  if (eventData.screen_resolution) url + '&sd=' + encodeUriComponent(eventData.screen_resolution);
 
   sendHttpRequest(url, (statusCode, headers, body) => {
     if (statusCode >= 200 && statusCode < 300) {

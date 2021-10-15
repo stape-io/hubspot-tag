@@ -1,14 +1,27 @@
 # HubSpot tag for Google Tag Manager Server Side
 
-You can use this tag for the Google Tag Manager Server Side container for:
+Hubspot tag for Google Tag Manager server container allows creating new contacts in HubSpot, update existing contacts, track custom behavioral events.
 
-- Track Custom Behavioral Events (Analytics API)
-- Track Page View (Events API / Tracking Code API)
-- Create or update a contact (Contacts API)
+The HubSpot tag for the server GTM communicates with the HubSpot API.
+
+#### You can use this tag for:
+
+- Track custom behavioral events
+- Create new contacts
+- Update existing contacts
+- Track user activity (in beta)
 
 ## How to use HubSpot tag
 
-- [How to connect your site with Hubspot using server-side tracking](https://stape.io/how-to-connect-website-with-hubspot-using-server-side-tracking/)
+#### Getting started
+
+1. Add [HubSpot tag](https://tagmanager.google.com/gallery/#/owners/stape-io/templates/hubspot-tag) to the server GTM from the template gallery.
+2. Add HubSpot API Key.
+3. Select event.
+4. Add user email and events information.
+
+
+More detailed description of [setting up the HubSpot tag in the sGTM](https://stape.io/how-to-connect-website-with-hubspot-using-server-side-tracking/) can be found by [this link](https://stape.io/how-to-connect-website-with-hubspot-using-server-side-tracking/).
 
 ## Open Source
 

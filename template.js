@@ -5,6 +5,8 @@ const JSON = require('JSON');
 const getRequestHeader = require('getRequestHeader');
 const makeTableMap = require('makeTableMap');
 const makeInteger = require('makeInteger');
+const makeNumber = require('makeNumber');
+const Promise = require('Promise');
 
 const logToConsole = require('logToConsole');
 const getContainerVersion = require('getContainerVersion');
@@ -37,7 +39,7 @@ function trackPageViewEvent() {
   if (eventData.page_location) url + '&pu=' + encodeUriComponent(eventData.page_location);
   if (eventData.screen_resolution) url + '&sd=' + encodeUriComponent(eventData.screen_resolution);
 
-  logRequest('page_view', 'GET', url, {});
+  logRequest('page_view', 'GET', url, '');
 
   sendHttpRequest(url, (statusCode, headers, body) => {
     logResponse(statusCode, headers, body, 'page_view');
@@ -103,86 +105,132 @@ function ecommerceEvent() {
 
   if (data.dealExternalId) {
     dealId = createOrUpdateDeal();
+
+    dealId.then(function(dealId) {
+      if (data.dealProducts && data.dealProducts.length > 0) {
+        if (data.ecommerceEventType === 'removeFromCart') {
+          removeDealLineItems(dealId, data.dealProducts);
+        } else {
+          createDealLineItems(dealId, data.dealProducts);
+        }
+      }
+    });
   };
 
   if (dealId && contactId) {
-    associateDealToContact(dealId, contactId);
+    Promise.all([dealId, contactId]).then((results) => {
+      associateDealToContact(results[0], results[1]).then(() => {
+        data.gtmOnSuccess();
+      });
+    });
+  } else if (dealId) {
+    dealId.then(() => {
+      data.gtmOnSuccess();
+    });
+  } else if (contactId) {
+    contactId.then(() => {
+      data.gtmOnSuccess();
+    });
+  } else {
+    data.gtmOnSuccess();
   }
 }
 
 function createDealLineItems(dealId, products) {
-  let currentLineItems = getCurrentLineItems(dealId);
+  getCurrentLineItems(dealId).then(function(currentLineItems) {
+    for (let i = 0; i < products.length; i++) {
+      let lineItemHsId = 0;
+      let lineItemNotExists = true;
 
-  for (let i = 0; i < products.length; i++) {
-    let lineItemNotExists = true;
-
-    if (currentLineItems.length > 0) {
-      for (let l = 0; l < currentLineItems.length; l++) {
-        if (currentLineItems[l].properties.hs_product_id == products[i].id) {
-          lineItemNotExists = false;
+      if (currentLineItems.length > 0) {
+        for (let l = 0; l < currentLineItems.length; l++) {
+          if (currentLineItems[l].properties.hs_sku == products[i].id) {
+            lineItemNotExists = false;
+            lineItemHsId = currentLineItems[l].id;
+          }
         }
       }
-    }
 
-    if (lineItemNotExists) {
       let lineItem = products[i];
 
-      lineItem.product_id = products[i].id;
-      lineItem.hs_product_id = products[i].id;
-      lineItem.deal_id = dealId;
-      lineItem.hs_deal_id = dealId;
-      lineItem.discount_amount = products[i].discount_amount ? products[i].discount_amount : '';
-      lineItem.num_items = products[i].quantity;
-      lineItem.tax_amount = products[i].tax;
+      if (products[i].quantity) lineItem.quantity = makeInteger(products[i].quantity);
+      if (products[i].quantity) lineItem.num_items = makeInteger(products[i].quantity);
+      if (products[i].quantity) lineItem.quantity_per_line = makeInteger(products[i].quantity);
 
-      let lineItemId = sendEcommerceRequest('line_item_create', 'POST', 'https://api.hubapi.com/crm/v3/objects/line_items', lineItem);
-      associateDealToLineItem(dealId, lineItemId);
+      if (products[i].price) lineItem.price = makeNumber(products[i].price);
+      if (products[i].price) lineItem.amount = makeNumber(products[i].price);
+
+      if (products[i].discount_amount) lineItem.hs_total_discount = makeNumber(products[i].discount_amount);
+      if (products[i].tax) lineItem.tax_amount = makeNumber(products[i].tax);
+
+
+      if (lineItemNotExists) {
+        sendEcommerceRequest('product_get', 'GET', 'https://api.hubapi.com/crm/v3/objects/products/'+products[i].id+'?idProperty=hs_sku', '').then((productId) => {
+          lineItem.sku = makeInteger(products[i].id);
+          lineItem.hs_sku = makeInteger(products[i].id);
+
+          lineItem.product_id = productId;
+          lineItem.hs_product_id = productId;
+
+          sendEcommerceRequest('line_item_create', 'POST', 'https://api.hubapi.com/crm/v3/objects/line_items', {'properties': lineItem}).then((lineItemId) => {
+            associateDealToLineItem(dealId, lineItemId);
+          });
+        });
+      } else {
+        sendEcommerceRequest('line_item_update', 'PATCH', 'https://api.hubapi.com/crm/v3/objects/line_items/'+lineItemHsId, {'properties': lineItem});
+      }
     }
-  }
+  });
 }
 
 function removeDealLineItems(dealId, products) {
-  let currentLineItems = getCurrentLineItems(dealId);
-
-  for (let i = 0; i < products.length; i++) {
-    if (currentLineItems.length > 0) {
-      for (let l = 0; l < currentLineItems.length; l++) {
-        if (currentLineItems[l].properties.hs_product_id == products[i].id) {
-          sendEcommerceRequest('line_item_delete', 'DELETE', '/crm/v3/objects/line_items/'+currentLineItems[l].id, {});
+  getCurrentLineItems(dealId).then(function(currentLineItems) {
+    for (let i = 0; i < products.length; i++) {
+      if (currentLineItems.length > 0) {
+        for (let l = 0; l < currentLineItems.length; l++) {
+          if (currentLineItems[l].properties.hs_sku == products[i].id) {
+            sendEcommerceRequest('line_item_delete', 'DELETE', 'https://api.hubapi.com/crm/v3/objects/line_items/'+currentLineItems[l].id, '');
+          }
         }
       }
     }
-  }
+  });
 }
 
 function associateDealToContact(dealId, contactId) {
   let url = 'https://api.hubapi.com/crm/v3/objects/deals/'+dealId+'/associations/contact/'+contactId+'/deal_to_contact';
 
-  return sendEcommerceRequest('deal_to_contact_association', 'PUT', url, {});
+  return sendEcommerceRequest('deal_to_contact_association', 'PUT', url, '');
 }
 
 function associateDealToLineItem(dealId, lineItemId) {
   let url = 'https://api.hubapi.com/crm/v3/objects/deals/'+dealId+'/associations/line_items/'+lineItemId+'/deal_to_line_item';
 
-  return sendEcommerceRequest('deal_to_line_item_association', 'PUT', url, {});
+  return sendEcommerceRequest('deal_to_line_item_association', 'PUT', url, '');
 }
 
 function getCurrentLineItems(dealId) {
   let url = 'https://api.hubapi.com/crm/v3/objects/deals/'+dealId+'/associations/line_items';
 
-  logRequest('get_current_line_item_ids', 'GET', url, {});
+  logRequest('get_current_line_item_ids', 'GET', url, '');
 
   return sendHttpRequest(url, {
     headers: getRequestHeaders(),
     method: 'GET',
-  }, {}).then((result) => {
+  }, '').then((result) => {
     logResponse(result.statusCode, result.headers, result.body, 'get_current_line_item_ids');
 
     if (result.statusCode >= 200 && result.statusCode < 300) {
       let currentLineItemsIds = JSON.parse(result.body).results;
 
       if (currentLineItemsIds.length > 0) {
-        let bodyData = {'inputs': currentLineItemsIds};
+        let bodyData = {
+          'inputs': currentLineItemsIds,
+          'properties': [
+            'hs_product_id',
+            'hs_sku'
+          ]
+        };
         url = 'https://api.hubapi.com/crm/v3/objects/line_items/batch/read';
 
         logRequest('get_current_line_items', 'POST', url, bodyData);
@@ -239,26 +287,13 @@ function createOrUpdateDeal() {
         'properties': data.dealParameters ? makeTableMap(data.dealParameters, 'property', 'value') : {}
       };
 
-      dealData.properties.dealExternalId = data.dealExternalId;
-      dealData.properties.order_number = data.dealExternalId;
       dealData.properties.dealname = data.dealExternalId;
-      dealData.properties.name = data.dealExternalId;
-
       if (data.dealAmount) dealData.properties.amount = data.dealAmount;
-      if (data.dealTax) dealData.properties.tax_price = data.dealTax;
 
       if (makeInteger(parsedBody.total) > 0) {
         dealId = sendEcommerceRequest('deal_update', 'PATCH', 'https://api.hubapi.com/crm/v3/objects/deals/'+parsedBody.results[0].id, dealData);
       } else {
         dealId = sendEcommerceRequest('deal_create', 'POST', 'https://api.hubapi.com/crm/v3/objects/deals', dealData);
-      }
-
-      if (data.dealProducts && data.dealProducts.length > 0) {
-        if (data.ecommerceEventType === 'removeFromCart') {
-          removeDealLineItems(dealId, data.dealProducts);
-        } else {
-          createDealLineItems(dealId, data.dealProducts);
-        }
       }
 
       return dealId;
@@ -301,7 +336,7 @@ function createOrUpdateContact() {
       if (data.email) contactData.properties.email = data.email;
       if (data.contactFirstName) contactData.properties.firstname = data.contactFirstName;
       if (data.contactLastName) contactData.properties.lastname = data.contactLastName;
-      if (data.contactPhone) contactData.properties.mobile_phone = data.contactPhone;
+      if (data.contactPhone) contactData.properties.mobilephone = data.contactPhone;
 
       if (makeInteger(parsedBody.total) > 0) {
         let contactID = parsedBody.results[0].id;
@@ -379,7 +414,9 @@ function sendEcommerceRequest(eventName, method, url, bodyData) {
   }, JSON.stringify(bodyData)).then((result) => {
     logResponse(result.statusCode, result.headers, result.body, eventName);
 
-    if (result.statusCode >= 200 && result.statusCode < 300) {
+    if (result.statusCode === 204) {
+      return true;
+    } else if (result.statusCode >= 200 && result.statusCode < 300) {
       return JSON.parse(result.body).id;
     } else {
       data.gtmOnFailure();

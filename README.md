@@ -7,6 +7,7 @@ The HubSpot tag for the server GTM communicates with the HubSpot API.
 #### You can use this tag for:
 
 - Track custom behavioral events
+- Track ecommerce events
 - Create new contacts
 - Update existing contacts
 - Track user activity (in beta)

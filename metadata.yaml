@@ -1,5 +1,7 @@
 homepage: "https://stape.io/"
 versions:
+  - sha: 4d223477e95a37b88bc073977a4ebbcbc841db64
+    changeNotes: Update Auth. Add ecommerce event tracking.
   - sha: 7c774471762e8f3da9f8c87831294ccaf903fb43
     changeNotes: Fix page view tracking issues.
   - sha: 310724ab4f02bc35368a8abd2f61c5136ac9ac33

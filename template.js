@@ -1,6 +1,5 @@
 ﻿const sendHttpRequest = require('sendHttpRequest');
 const encodeUriComponent = require('encodeUriComponent');
-const getAllEventData = require('getAllEventData');
 const JSON = require('JSON');
 const getRequestHeader = require('getRequestHeader');
 const makeTableMap = require('makeTableMap');
@@ -14,12 +13,8 @@ const isLoggingEnabled = determinateIsLoggingEnabled();
 const traceId = getRequestHeader('trace-id');
 
 let type = data.type;
-const eventData = getAllEventData();
 
-
-if (type === 'trackEventPageView') {
-  trackPageViewEvent();
-} else if (type === 'trackCustomBehavioralEvent') {
+if (type === 'trackCustomBehavioralEvent') {
   trackCustomBehavioralEvent();
 } else if (type === 'createOrUpdateContact') {
   createOrUpdateContactEvent();
@@ -27,29 +22,6 @@ if (type === 'trackEventPageView') {
   ecommerceEvent();
 } else {
   data.gtmOnFailure();
-}
-
-
-function trackPageViewEvent() {
-  let url = 'https://track.hubspot.com/__ptq.gif?ct=' + encodeUriComponent('standard-page');
-
-  if (data.accountId) url + '&a=' + encodeUriComponent(data.accountId);
-  if (eventData.page_referrer) url + '&r=' + encodeUriComponent(eventData.page_referrer);
-  if (eventData.page_title) url + '&t=' + encodeUriComponent(eventData.page_title);
-  if (eventData.page_location) url + '&pu=' + encodeUriComponent(eventData.page_location);
-  if (eventData.screen_resolution) url + '&sd=' + encodeUriComponent(eventData.screen_resolution);
-
-  logRequest('page_view', 'GET', url, '');
-
-  sendHttpRequest(url, (statusCode, headers, body) => {
-    logResponse(statusCode, headers, body, 'page_view');
-
-    if (statusCode >= 200 && statusCode < 300) {
-      data.gtmOnSuccess();
-    } else {
-      data.gtmOnFailure();
-    }
-  }, {method: 'GET', timeout: 3500});
 }
 
 function trackCustomBehavioralEvent() {

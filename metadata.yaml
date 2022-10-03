@@ -1,5 +1,7 @@
 homepage: "https://stape.io/"
 versions:
+  - sha: 39655a393bd1f082b4d654be4e01ec9c0ccdd84b
+    changeNotes: Fix issue with contact create.
   - sha: a2f812e8278998a0c577a81c8ec9b4b7215341da
     changeNotes: Remove Track PageView functionality.
   - sha: 4d223477e95a37b88bc073977a4ebbcbc841db64

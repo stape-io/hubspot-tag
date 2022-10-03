@@ -17,7 +17,7 @@ let type = data.type;
 if (type === 'trackCustomBehavioralEvent') {
   trackCustomBehavioralEvent();
 } else if (type === 'createOrUpdateContact') {
-  createOrUpdateContactEvent();
+  createOrUpdateContact();
 } else if (type === 'ecommerce') {
   ecommerceEvent();
 } else {
@@ -40,25 +40,6 @@ function trackCustomBehavioralEvent() {
 
   sendHttpRequest(url, (statusCode, headers, body) => {
     logResponse(statusCode, headers, body, data.customBehavioralEventEventName);
-
-    if (statusCode >= 200 && statusCode < 300) {
-      data.gtmOnSuccess();
-    } else {
-      data.gtmOnFailure();
-    }
-  }, {headers: getRequestHeaders(), method: 'POST'}, JSON.stringify(bodyData));
-}
-
-function createOrUpdateContactEvent() {
-  let url = 'https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/'+encodeUriComponent(data.email)+'/';
-  let bodyData = {
-    'properties': data.contactParameters
-  };
-
-  logRequest('contact_create_or_update', 'POST', url, bodyData);
-
-  sendHttpRequest(url, (statusCode, headers, body) => {
-    logResponse(statusCode, headers, body, 'contact_create_or_update');
 
     if (statusCode >= 200 && statusCode < 300) {
       data.gtmOnSuccess();

@@ -17,7 +17,9 @@ let type = data.type;
 if (type === 'trackCustomBehavioralEvent') {
   trackCustomBehavioralEvent();
 } else if (type === 'createOrUpdateContact') {
-  createOrUpdateContact();
+  createOrUpdateContact().then(() => {
+    data.gtmOnSuccess();
+  });
 } else if (type === 'ecommerce') {
   ecommerceEvent();
 } else {

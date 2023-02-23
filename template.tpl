@@ -42,6 +42,10 @@ ___TEMPLATE_PARAMETERS___
     "displayName": "Type",
     "radioItems": [
       {
+        "value": "trackEventPageView",
+        "displayValue": "Track Page View"
+      },
+      {
         "value": "createOrUpdateContact",
         "displayValue": "Create or Update a Contact"
       },
@@ -391,15 +395,20 @@ const makeTableMap = require('makeTableMap');
 const makeInteger = require('makeInteger');
 const makeNumber = require('makeNumber');
 const Promise = require('Promise');
+const getAllEventData = require('getAllEventData');
+const encodeUriComponent = require('encodeUriComponent');
 
 const logToConsole = require('logToConsole');
 const getContainerVersion = require('getContainerVersion');
 const isLoggingEnabled = determinateIsLoggingEnabled();
 const traceId = getRequestHeader('trace-id');
+const eventData = getAllEventData();
 
 let type = data.type;
 
-if (type === 'trackCustomBehavioralEvent') {
+if (type === 'trackEventPageView') {
+  trackPageViewEvent();
+} else if (type === 'trackCustomBehavioralEvent') {
   trackCustomBehavioralEvent();
 } else if (type === 'createOrUpdateContact') {
   createOrUpdateContact().then(() => {
@@ -409,6 +418,53 @@ if (type === 'trackCustomBehavioralEvent') {
   ecommerceEvent();
 } else {
   data.gtmOnFailure();
+}
+
+function trackPageViewEvent() {
+  let url =
+    'https://track.hubspot.com/__ptq.gif?k=1&v=1.1&ct=' +
+    encodeUriComponent('standard-page');
+  const clientId = eventData.client_id;
+  if (data.accountId) url = url + '&a=' + encodeUriComponent(data.accountId);
+  if (clientId) {
+    url =
+      url +
+      '&vi=' +
+      encodeUriComponent(clientId) +
+      '&u=' +
+      encodeUriComponent(clientId);
+  }
+  if (eventData.ga_session_id) url = url + '&b=' + encodeUriComponent(eventData.ga_session_id);
+  if (eventData.page_referrer)
+    url = url + '&r=' + encodeUriComponent(eventData.page_referrer);
+  if (eventData.page_title)
+    url = url + '&t=' + encodeUriComponent(eventData.page_title);
+  if (eventData.page_location)
+    url = url + '&pu=' + encodeUriComponent(eventData.page_location);
+  if (eventData.screen_resolution)
+    url = url + '&sd=' + encodeUriComponent(eventData.screen_resolution);
+  if (eventData.page_encoding)
+    url = url + '&cs=' + encodeUriComponent(eventData.page_encoding);
+
+  logRequest('page_view', 'GET', url, '');
+
+  sendHttpRequest(
+    url,
+    (statusCode, headers, body) => {
+      logResponse(statusCode, headers, body, 'page_view');
+
+      if (statusCode >= 200 && statusCode < 300) {
+        data.gtmOnSuccess();
+      } else {
+        data.gtmOnFailure();
+      }
+    },
+    {
+      headers: { 'User-Agent': eventData.user_agent },
+      method: 'GET',
+      timeout: 3500,
+    }
+  );
 }
 
 function trackCustomBehavioralEvent() {
@@ -1010,6 +1066,27 @@ ___SERVER_PERMISSIONS___
         },
         {
           "key": "queryParameterAccess",
+          "value": {
+            "type": 1,
+            "string": "any"
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "read_event_data",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "eventDataAccess",
           "value": {
             "type": 1,
             "string": "any"

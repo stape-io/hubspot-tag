@@ -1,5 +1,4 @@
 ﻿const sendHttpRequest = require('sendHttpRequest');
-const encodeUriComponent = require('encodeUriComponent');
 const JSON = require('JSON');
 const getRequestHeader = require('getRequestHeader');
 const makeTableMap = require('makeTableMap');
@@ -29,26 +28,41 @@ if (type === 'trackCustomBehavioralEvent') {
 function trackCustomBehavioralEvent() {
   let url = 'https://api.hubapi.com/events/v3/send';
   let bodyData = {
-    'eventName': data.customBehavioralEventEventName,
-    'properties': data.customBehavioralEventParameters ? makeTableMap(data.customBehavioralEventParameters, 'property', 'value') : {},
+    eventName: data.customBehavioralEventEventName,
+    properties: data.customBehavioralEventParameters
+      ? makeTableMap(data.customBehavioralEventParameters, 'property', 'value')
+      : {},
   };
 
-  if (data.customBehavioralEventUtk) bodyData.utk = data.customBehavioralEventUtk;
+  if (data.customBehavioralEventUtk)
+    bodyData.utk = data.customBehavioralEventUtk;
   if (data.email) bodyData.email = data.email;
-  if (data.customBehavioralEventObjectId) bodyData.objectId = data.customBehavioralEventObjectId;
-  if (data.customBehavioralEventOccurredAt) bodyData.occurredAt = data.customBehavioralEventOccurredAt;
+  if (data.customBehavioralEventObjectId)
+    bodyData.objectId = data.customBehavioralEventObjectId;
+  if (data.customBehavioralEventOccurredAt)
+    bodyData.occurredAt = data.customBehavioralEventOccurredAt;
 
   logRequest(data.customBehavioralEventEventName, 'POST', url, bodyData);
 
-  sendHttpRequest(url, (statusCode, headers, body) => {
-    logResponse(statusCode, headers, body, data.customBehavioralEventEventName);
+  sendHttpRequest(
+    url,
+    (statusCode, headers, body) => {
+      logResponse(
+        statusCode,
+        headers,
+        body,
+        data.customBehavioralEventEventName
+      );
 
-    if (statusCode >= 200 && statusCode < 300) {
-      data.gtmOnSuccess();
-    } else {
-      data.gtmOnFailure();
-    }
-  }, {headers: getRequestHeaders(), method: 'POST'}, JSON.stringify(bodyData));
+      if (statusCode >= 200 && statusCode < 300) {
+        data.gtmOnSuccess();
+      } else {
+        data.gtmOnFailure();
+      }
+    },
+    { headers: getRequestHeaders(), method: 'POST' },
+    JSON.stringify(bodyData)
+  );
 }
 
 function ecommerceEvent() {
@@ -61,7 +75,7 @@ function ecommerceEvent() {
   if (data.dealExternalId) {
     dealId = createOrUpdateDeal();
 
-    dealId.then(function(dealId) {
+    dealId.then(function (dealId) {
       if (data.dealProducts && data.dealProducts.length > 0) {
         if (data.ecommerceEventType === 'removeFromCart') {
           removeDealLineItems(dealId, data.dealProducts);
@@ -70,7 +84,7 @@ function ecommerceEvent() {
         }
       }
     });
-  };
+  }
 
   if (dealId && contactId) {
     Promise.all([dealId, contactId]).then((results) => {
@@ -92,7 +106,7 @@ function ecommerceEvent() {
 }
 
 function createDealLineItems(dealId, products) {
-  getCurrentLineItems(dealId).then(function(currentLineItems) {
+  getCurrentLineItems(dealId).then(function (currentLineItems) {
     for (let i = 0; i < products.length; i++) {
       let lineItemHsId = 0;
       let lineItemNotExists = true;
@@ -108,43 +122,69 @@ function createDealLineItems(dealId, products) {
 
       let lineItem = products[i];
 
-      if (products[i].quantity) lineItem.quantity = makeInteger(products[i].quantity);
-      if (products[i].quantity) lineItem.num_items = makeInteger(products[i].quantity);
-      if (products[i].quantity) lineItem.quantity_per_line = makeInteger(products[i].quantity);
+      if (products[i].quantity)
+        lineItem.quantity = makeInteger(products[i].quantity);
+      if (products[i].quantity)
+        lineItem.num_items = makeInteger(products[i].quantity);
+      if (products[i].quantity)
+        lineItem.quantity_per_line = makeInteger(products[i].quantity);
 
       if (products[i].price) lineItem.price = makeNumber(products[i].price);
       if (products[i].price) lineItem.amount = makeNumber(products[i].price);
 
-      if (products[i].discount_amount) lineItem.hs_total_discount = makeNumber(products[i].discount_amount);
+      if (products[i].discount_amount)
+        lineItem.hs_total_discount = makeNumber(products[i].discount_amount);
       if (products[i].tax) lineItem.tax_amount = makeNumber(products[i].tax);
 
-
       if (lineItemNotExists) {
-        sendEcommerceRequest('product_get', 'GET', 'https://api.hubapi.com/crm/v3/objects/products/'+products[i].id+'?idProperty=hs_sku', '').then((productId) => {
+        sendEcommerceRequest(
+          'product_get',
+          'GET',
+          'https://api.hubapi.com/crm/v3/objects/products/' +
+            products[i].id +
+            '?idProperty=hs_sku',
+          ''
+        ).then((productId) => {
           lineItem.sku = makeInteger(products[i].id);
           lineItem.hs_sku = makeInteger(products[i].id);
 
           lineItem.product_id = productId;
           lineItem.hs_product_id = productId;
 
-          sendEcommerceRequest('line_item_create', 'POST', 'https://api.hubapi.com/crm/v3/objects/line_items', {'properties': lineItem}).then((lineItemId) => {
+          sendEcommerceRequest(
+            'line_item_create',
+            'POST',
+            'https://api.hubapi.com/crm/v3/objects/line_items',
+            { properties: lineItem }
+          ).then((lineItemId) => {
             associateDealToLineItem(dealId, lineItemId);
           });
         });
       } else {
-        sendEcommerceRequest('line_item_update', 'PATCH', 'https://api.hubapi.com/crm/v3/objects/line_items/'+lineItemHsId, {'properties': lineItem});
+        sendEcommerceRequest(
+          'line_item_update',
+          'PATCH',
+          'https://api.hubapi.com/crm/v3/objects/line_items/' + lineItemHsId,
+          { properties: lineItem }
+        );
       }
     }
   });
 }
 
 function removeDealLineItems(dealId, products) {
-  getCurrentLineItems(dealId).then(function(currentLineItems) {
+  getCurrentLineItems(dealId).then(function (currentLineItems) {
     for (let i = 0; i < products.length; i++) {
       if (currentLineItems.length > 0) {
         for (let l = 0; l < currentLineItems.length; l++) {
           if (currentLineItems[l].properties.hs_sku == products[i].id) {
-            sendEcommerceRequest('line_item_delete', 'DELETE', 'https://api.hubapi.com/crm/v3/objects/line_items/'+currentLineItems[l].id, '');
+            sendEcommerceRequest(
+              'line_item_delete',
+              'DELETE',
+              'https://api.hubapi.com/crm/v3/objects/line_items/' +
+                currentLineItems[l].id,
+              ''
+            );
           }
         }
       }
@@ -153,48 +193,76 @@ function removeDealLineItems(dealId, products) {
 }
 
 function associateDealToContact(dealId, contactId) {
-  let url = 'https://api.hubapi.com/crm/v3/objects/deals/'+dealId+'/associations/contact/'+contactId+'/deal_to_contact';
+  let url =
+    'https://api.hubapi.com/crm/v3/objects/deals/' +
+    dealId +
+    '/associations/contact/' +
+    contactId +
+    '/deal_to_contact';
 
   return sendEcommerceRequest('deal_to_contact_association', 'PUT', url, '');
 }
 
 function associateDealToLineItem(dealId, lineItemId) {
-  let url = 'https://api.hubapi.com/crm/v3/objects/deals/'+dealId+'/associations/line_items/'+lineItemId+'/deal_to_line_item';
+  let url =
+    'https://api.hubapi.com/crm/v3/objects/deals/' +
+    dealId +
+    '/associations/line_items/' +
+    lineItemId +
+    '/deal_to_line_item';
 
   return sendEcommerceRequest('deal_to_line_item_association', 'PUT', url, '');
 }
 
 function getCurrentLineItems(dealId) {
-  let url = 'https://api.hubapi.com/crm/v3/objects/deals/'+dealId+'/associations/line_items';
+  let url =
+    'https://api.hubapi.com/crm/v3/objects/deals/' +
+    dealId +
+    '/associations/line_items';
 
   logRequest('get_current_line_item_ids', 'GET', url, '');
 
-  return sendHttpRequest(url, {
-    headers: getRequestHeaders(),
-    method: 'GET',
-  }, '').then((result) => {
-    logResponse(result.statusCode, result.headers, result.body, 'get_current_line_item_ids');
+  return sendHttpRequest(
+    url,
+    {
+      headers: getRequestHeaders(),
+      method: 'GET',
+    },
+    ''
+  ).then((result) => {
+    logResponse(
+      result.statusCode,
+      result.headers,
+      result.body,
+      'get_current_line_item_ids'
+    );
 
     if (result.statusCode >= 200 && result.statusCode < 300) {
       let currentLineItemsIds = JSON.parse(result.body).results;
 
       if (currentLineItemsIds.length > 0) {
         let bodyData = {
-          'inputs': currentLineItemsIds,
-          'properties': [
-            'hs_product_id',
-            'hs_sku'
-          ]
+          inputs: currentLineItemsIds,
+          properties: ['hs_product_id', 'hs_sku'],
         };
         url = 'https://api.hubapi.com/crm/v3/objects/line_items/batch/read';
 
         logRequest('get_current_line_items', 'POST', url, bodyData);
 
-        return sendHttpRequest(url, {
-          headers: getRequestHeaders(),
-          method: 'POST',
-        }, JSON.stringify(bodyData)).then((result) => {
-          logResponse(result.statusCode, result.headers, result.body, 'get_current_line_items');
+        return sendHttpRequest(
+          url,
+          {
+            headers: getRequestHeaders(),
+            method: 'POST',
+          },
+          JSON.stringify(bodyData)
+        ).then((result) => {
+          logResponse(
+            result.statusCode,
+            result.headers,
+            result.body,
+            'get_current_line_items'
+          );
 
           if (result.statusCode >= 200 && result.statusCode < 300) {
             return JSON.parse(result.body).results;
@@ -214,41 +282,58 @@ function getCurrentLineItems(dealId) {
 function createOrUpdateDeal() {
   let url = 'https://api.hubapi.com/crm/v3/objects/deals/search';
   let bodyData = {
-    'filterGroups': [
+    filterGroups: [
       {
-        'filters': [
+        filters: [
           {
-            'value': data.dealExternalId,
-            'propertyName': 'dealname',
-            'operator': 'EQ'
-          }
-        ]
-      }
-    ]
+            value: data.dealExternalId,
+            propertyName: 'dealname',
+            operator: 'EQ',
+          },
+        ],
+      },
+    ],
   };
 
   logRequest('deal_search', 'POST', url, bodyData);
 
-  return sendHttpRequest(url, {
-    headers: getRequestHeaders(),
-    method: 'POST',
-  }, JSON.stringify(bodyData)).then((result) => {
+  return sendHttpRequest(
+    url,
+    {
+      headers: getRequestHeaders(),
+      method: 'POST',
+    },
+    JSON.stringify(bodyData)
+  ).then((result) => {
     logResponse(result.statusCode, result.headers, result.body, 'deal_search');
 
     if (result.statusCode >= 200 && result.statusCode < 300) {
       let dealId;
       let parsedBody = JSON.parse(result.body);
       let dealData = {
-        'properties': data.dealParameters ? makeTableMap(data.dealParameters, 'property', 'value') : {}
+        properties: data.dealParameters
+          ? makeTableMap(data.dealParameters, 'property', 'value')
+          : {},
       };
 
       dealData.properties.dealname = data.dealExternalId;
       if (data.dealAmount) dealData.properties.amount = data.dealAmount;
 
       if (makeInteger(parsedBody.total) > 0) {
-        dealId = sendEcommerceRequest('deal_update', 'PATCH', 'https://api.hubapi.com/crm/v3/objects/deals/'+parsedBody.results[0].id, dealData);
+        dealId = sendEcommerceRequest(
+          'deal_update',
+          'PATCH',
+          'https://api.hubapi.com/crm/v3/objects/deals/' +
+            parsedBody.results[0].id,
+          dealData
+        );
       } else {
-        dealId = sendEcommerceRequest('deal_create', 'POST', 'https://api.hubapi.com/crm/v3/objects/deals', dealData);
+        dealId = sendEcommerceRequest(
+          'deal_create',
+          'POST',
+          'https://api.hubapi.com/crm/v3/objects/deals',
+          dealData
+        );
       }
 
       return dealId;
@@ -261,45 +346,69 @@ function createOrUpdateDeal() {
 function createOrUpdateContact() {
   let url = 'https://api.hubapi.com/crm/v3/objects/contacts/search';
   let bodyData = {
-    'filterGroups': [
+    filterGroups: [
       {
-        'filters': [
+        filters: [
           {
-            'value': data.email,
-            'propertyName': 'email',
-            'operator': 'EQ'
-          }
-        ]
-      }
-    ]
+            value: data.email,
+            propertyName: 'email',
+            operator: 'EQ',
+          },
+        ],
+      },
+    ],
   };
 
   logRequest('contact_search', 'POST', url, bodyData);
 
-  return sendHttpRequest(url, {
-    headers: getRequestHeaders(),
-    method: 'POST',
-  }, JSON.stringify(bodyData)).then((result) => {
-    logResponse(result.statusCode, result.headers, result.body, 'contact_search');
+  return sendHttpRequest(
+    url,
+    {
+      headers: getRequestHeaders(),
+      method: 'POST',
+    },
+    JSON.stringify(bodyData)
+  ).then((result) => {
+    logResponse(
+      result.statusCode,
+      result.headers,
+      result.body,
+      'contact_search'
+    );
 
     if (result.statusCode >= 200 && result.statusCode < 300) {
       let parsedBody = JSON.parse(result.body);
       let contactData = {
-        'properties': data.contactParameters ? makeTableMap(data.contactParameters, 'property', 'value') : {}
+        properties: data.contactParameters
+          ? makeTableMap(data.contactParameters, 'property', 'value')
+          : {},
       };
 
       if (data.email) contactData.properties.email = data.email;
-      if (data.contactFirstName) contactData.properties.firstname = data.contactFirstName;
-      if (data.contactLastName) contactData.properties.lastname = data.contactLastName;
-      if (data.contactPhone) contactData.properties.mobilephone = data.contactPhone;
+      if (data.contactFirstName)
+        contactData.properties.firstname = data.contactFirstName;
+      if (data.contactLastName)
+        contactData.properties.lastname = data.contactLastName;
+      if (data.contactPhone)
+        contactData.properties.mobilephone = data.contactPhone;
 
       if (makeInteger(parsedBody.total) > 0) {
         let contactID = parsedBody.results[0].id;
 
-        return sendEcommerceRequest('contact_update', 'PATCH', 'https://api.hubapi.com/crm/v3/objects/contacts/'+contactID, contactData);
+        return sendEcommerceRequest(
+          'contact_update',
+          'PATCH',
+          'https://api.hubapi.com/crm/v3/objects/contacts/' + contactID,
+          contactData
+        );
       }
 
-      return sendEcommerceRequest('contact_create', 'POST', 'https://api.hubapi.com/crm/v3/objects/contacts', contactData);
+      return sendEcommerceRequest(
+        'contact_create',
+        'POST',
+        'https://api.hubapi.com/crm/v3/objects/contacts',
+        contactData
+      );
     } else {
       data.gtmOnFailure();
     }
@@ -309,8 +418,8 @@ function createOrUpdateContact() {
 function determinateIsLoggingEnabled() {
   const containerVersion = getContainerVersion();
   const isDebug = !!(
-      containerVersion &&
-      (containerVersion.debugMode || containerVersion.previewMode)
+    containerVersion &&
+    (containerVersion.debugMode || containerVersion.previewMode)
   );
 
   if (!data.logType) {
@@ -330,43 +439,54 @@ function determinateIsLoggingEnabled() {
 
 function logResponse(statusCode, headers, body, eventName) {
   if (isLoggingEnabled) {
-    logToConsole(JSON.stringify({
-      'Name': 'HubSpot',
-      'Type': 'Response',
-      'TraceId': traceId,
-      'EventName': eventName,
-      'ResponseStatusCode': statusCode,
-      'ResponseHeaders': headers,
-      'ResponseBody': body,
-    }));
+    logToConsole(
+      JSON.stringify({
+        Name: 'HubSpot',
+        Type: 'Response',
+        TraceId: traceId,
+        EventName: eventName,
+        ResponseStatusCode: statusCode,
+        ResponseHeaders: headers,
+        ResponseBody: body,
+      })
+    );
   }
 }
 
 function logRequest(eventName, method, url, bodyData) {
   if (isLoggingEnabled) {
-    logToConsole(JSON.stringify({
-      'Name': 'HubSpot',
-      'Type': 'Request',
-      'TraceId': traceId,
-      'EventName': eventName,
-      'RequestMethod': method,
-      'RequestUrl': url,
-      'RequestBody': bodyData,
-    }));
+    logToConsole(
+      JSON.stringify({
+        Name: 'HubSpot',
+        Type: 'Request',
+        TraceId: traceId,
+        EventName: eventName,
+        RequestMethod: method,
+        RequestUrl: url,
+        RequestBody: bodyData,
+      })
+    );
   }
 }
 
 function getRequestHeaders() {
-  return {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + data.apiKey};
+  return {
+    'Content-Type': 'application/json',
+    Authorization: 'Bearer ' + data.apiKey,
+  };
 }
 
 function sendEcommerceRequest(eventName, method, url, bodyData) {
   logRequest(eventName, method, url, bodyData);
 
-  return sendHttpRequest(url, {
-    headers: getRequestHeaders(),
-    method: method,
-  }, JSON.stringify(bodyData)).then((result) => {
+  return sendHttpRequest(
+    url,
+    {
+      headers: getRequestHeaders(),
+      method: method,
+    },
+    JSON.stringify(bodyData)
+  ).then((result) => {
     logResponse(result.statusCode, result.headers, result.body, eventName);
 
     if (result.statusCode === 204) {

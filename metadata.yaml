@@ -1,5 +1,7 @@
 homepage: "https://stape.io/"
 versions:
+  - sha: 509b20ff3f529cf48e61912bd5b72ab889de4b06
+    changeNotes: Support for PageView event track.
   - sha: 91cd5675ce8be47d783db3123ac20979e22065be
     changeNotes: Fix create contact status.
   - sha: 39655a393bd1f082b4d654be4e01ec9c0ccdd84b

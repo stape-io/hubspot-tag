@@ -26,6 +26,8 @@ if (type === 'trackEventPageView') {
   });
 } else if (type === 'ecommerce') {
   ecommerceEvent();
+} else if (type === 'createOrUpdateObject') {
+  createOrUpdateCustomObject();
 } else {
   data.gtmOnFailure();
 }
@@ -550,4 +552,76 @@ function sendEcommerceRequest(eventName, method, url, bodyData) {
       data.gtmOnFailure();
     }
   });
+}
+
+function createOrUpdateCustomObject() {
+  const url = 'https://api.hubapi.com/crm/v3/objects/' + data.customObjectId;
+
+  const customObjectParameters = data.customObjectParameters;
+  let bodyData = {
+    properties: {}
+  };
+  for (let i in customObjectParameters) {
+    bodyData.properties[customObjectParameters[i].key] =
+      customObjectParameters[i].value;
+  }
+
+  logRequest('createCustomObject', 'POST', url, bodyData);
+
+  sendHttpRequest(
+    url,
+    (statusCode, headers, body) => {
+      logResponse(statusCode, headers, body, 'createCustomObject');
+
+      if (statusCode >= 200 && statusCode < 300) {
+        const responseData = JSON.parse(body);
+        const customObjectId = responseData.id;
+
+        createOrUpdateContact()
+          .then((contactId) => {
+            associateCustomObjectWithContact(customObjectId, contactId);
+          })
+          .catch((error) => {
+            data.gtmOnFailure();
+          });
+      } else {
+        data.gtmOnFailure();
+      }
+    },
+    { headers: getRequestHeaders(), method: 'POST' },
+    JSON.stringify(bodyData)
+  );
+}
+
+function associateCustomObjectWithContact(customObjectId, contactId) {
+  const url =
+    'https://api.hubapi.com/crm/v3/objects/' +
+    encodeUriComponent(data.customObjectId) +
+    '/' +
+    encodeUriComponent(customObjectId) +
+    '/associations/contacts/' +
+    encodeUriComponent(contactId) +
+    '/';
+
+  logRequest('associateCustomObjectWithContact', 'PUT', url, '');
+
+  // Send the association request
+  sendHttpRequest(
+    url,
+    (statusCode, headers, body) => {
+      logResponse(
+        statusCode,
+        headers,
+        body,
+        'associateCustomObjectWithContact'
+      );
+
+      if (statusCode >= 200 && statusCode < 300) {
+        data.gtmOnSuccess();
+      } else {
+        data.gtmOnFailure();
+      }
+    },
+    { headers: getRequestHeaders(), method: 'PUT' }
+  );
 }

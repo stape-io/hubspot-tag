@@ -56,6 +56,10 @@ ___TEMPLATE_PARAMETERS___
       {
         "value": "ecommerce",
         "displayValue": "Ecommerce event"
+      },
+      {
+        "value": "createOrUpdateObject",
+        "displayValue": "Create or Update a custom object"
       }
     ],
     "simpleValueType": true,
@@ -183,6 +187,49 @@ ___TEMPLATE_PARAMETERS___
       {
         "paramName": "type",
         "paramValue": "trackCustomBehavioralEvent",
+        "type": "EQUALS"
+      }
+    ]
+  },
+  {
+    "type": "GROUP",
+    "name": "customObjectEventParametersGroup",
+    "displayName": "Custom Behavioral Event Parameters",
+    "groupStyle": "ZIPPY_OPEN",
+    "subParams": [
+      {
+        "type": "TEXT",
+        "name": "customObjectId",
+        "displayName": "Object Id",
+        "simpleValueType": true,
+        "help": "The custom object id"
+      },
+      {
+        "type": "SIMPLE_TABLE",
+        "name": "customObjectParameters",
+        "simpleTableColumns": [
+          {
+            "defaultValue": "",
+            "displayName": "Key",
+            "name": "key",
+            "type": "TEXT",
+            "isUnique": true
+          },
+          {
+            "defaultValue": "",
+            "displayName": "Value",
+            "name": "value",
+            "type": "TEXT"
+          }
+        ],
+        "help": "Map of properties for the event in the format property internal name - property value.",
+        "displayName": "Properties"
+      }
+    ],
+    "enablingConditions": [
+      {
+        "paramName": "type",
+        "paramValue": "createOrUpdateObject",
         "type": "EQUALS"
       }
     ]
@@ -397,6 +444,7 @@ const makeNumber = require('makeNumber');
 const Promise = require('Promise');
 const getAllEventData = require('getAllEventData');
 const encodeUriComponent = require('encodeUriComponent');
+const Object = require('Object');
 
 const logToConsole = require('logToConsole');
 const getContainerVersion = require('getContainerVersion');
@@ -416,6 +464,8 @@ if (type === 'trackEventPageView') {
   });
 } else if (type === 'ecommerce') {
   ecommerceEvent();
+} else if (type === 'createOrUpdateObject') { // New block for custom object
+  createOrUpdateCustomObject();
 } else {
   data.gtmOnFailure();
 }
@@ -939,6 +989,99 @@ function sendEcommerceRequest(eventName, method, url, bodyData) {
       data.gtmOnFailure();
     }
   });
+}
+
+function createOrUpdateCustomObject() {
+  const url = 'https://api.hubapi.com/crm/v3/objects/' + data.customObjectId;
+
+  const customObjectParameters = data.customObjectParameters;
+  let bodyData = {
+    properties: {}
+  };
+  for (let i in customObjectParameters) {
+    bodyData.properties[customObjectParameters[i].key] = customObjectParameters[i].value;
+  }
+
+  logRequest('createCustomObject', 'POST', url, bodyData);
+
+  sendHttpRequest(
+    url,
+    (statusCode, headers, body) => {
+      logResponse(statusCode, headers, body, 'createCustomObject');
+
+      if (statusCode >= 200 && statusCode < 300) {
+        const responseData = JSON.parse(body);
+        const customObjectId = responseData.id;
+
+        logToConsole('Custom Object successfully created with ID: ' + customObjectId);
+
+        // Retrieve or create the contact before associating
+        createOrUpdateContact()
+          .then((contactId) => {
+            associateCustomObjectWithContact(customObjectId, contactId);
+          })
+          .catch((error) => {
+            logToConsole('Error in contact creation or retrieval: ', error);
+            data.gtmOnFailure();
+          });
+      } else {
+        logToConsole('Failed to create custom object.');
+        data.gtmOnFailure();
+      }
+    },
+    { headers: getRequestHeaders(), method: 'POST' },
+    JSON.stringify(bodyData)
+  );
+}
+
+function associateCustomObjectWithContact(customObjectId, contactId) {
+  // Construct the URL for associating the custom object with the contact
+  const url =
+    'https://api.hubapi.com/crm/v3/objects/' + 
+     encodeUriComponent(data.customObjectId) + '/' +    
+    encodeUriComponent(customObjectId) +
+    '/associations/contacts/' +
+    encodeUriComponent(contactId) + '/69'; // not sure why /69 is needed
+
+  // Log the association request
+  logToConsole(
+    'Initiating association of Custom Object ID: ' +
+      customObjectId +
+      ' with Contact ID: ' +
+      contactId
+  );
+  logRequest('associateCustomObjectWithContact', 'PUT', url, '');
+
+  // Send the association request
+  sendHttpRequest(
+    url,
+    (statusCode, headers, body) => {
+      // Log the response details
+      logResponse(statusCode, headers, body, 'associateCustomObjectWithContact');
+
+      if (statusCode >= 200 && statusCode < 300) {
+        // Log success and trigger success callback
+        logToConsole(
+          'Successfully associated Custom Object ID: ' +
+            customObjectId +
+            ' with Contact ID: ' +
+            contactId
+        );
+        data.gtmOnSuccess();
+      } else {
+        // Log failure and trigger failure callback
+        logToConsole(
+          'Failed to associate Custom Object ID: ' +
+            customObjectId +
+            ' with Contact ID: ' +
+            contactId
+        );
+        logToConsole('Response Body: ' + body);
+        data.gtmOnFailure();
+      }
+    },
+    { headers: getRequestHeaders(), method: 'PUT' }
+  );
 }
 
 

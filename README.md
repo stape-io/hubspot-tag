@@ -16,7 +16,6 @@ The HubSpot tag for the server GTM communicates with the HubSpot API.
 3. Select event.
 4. Add user email and events information.
 
-
 More detailed description of [setting up the HubSpot tag in the sGTM](https://stape.io/how-to-connect-website-with-hubspot-using-server-side-tracking/) can be found by [this link](https://stape.io/how-to-connect-website-with-hubspot-using-server-side-tracking/).
 
 ## Open Source

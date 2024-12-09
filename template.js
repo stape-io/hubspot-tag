@@ -73,7 +73,7 @@ function trackPageViewEvent() {
     {
       headers: { 'User-Agent': eventData.user_agent },
       method: 'GET',
-      timeout: 3500,
+      timeout: 3500
     }
   );
 }
@@ -84,7 +84,7 @@ function trackCustomBehavioralEvent() {
     eventName: data.customBehavioralEventEventName,
     properties: data.customBehavioralEventParameters
       ? makeTableMap(data.customBehavioralEventParameters, 'property', 'value')
-      : {},
+      : {}
   };
 
   if (data.customBehavioralEventUtk)
@@ -279,7 +279,7 @@ function getCurrentLineItems(dealId) {
     url,
     {
       headers: getRequestHeaders(),
-      method: 'GET',
+      method: 'GET'
     },
     ''
   ).then((result) => {
@@ -296,7 +296,7 @@ function getCurrentLineItems(dealId) {
       if (currentLineItemsIds.length > 0) {
         let bodyData = {
           inputs: currentLineItemsIds,
-          properties: ['hs_product_id', 'hs_sku'],
+          properties: ['hs_product_id', 'hs_sku']
         };
         url = 'https://api.hubapi.com/crm/v3/objects/line_items/batch/read';
 
@@ -306,7 +306,7 @@ function getCurrentLineItems(dealId) {
           url,
           {
             headers: getRequestHeaders(),
-            method: 'POST',
+            method: 'POST'
           },
           JSON.stringify(bodyData)
         ).then((result) => {
@@ -341,11 +341,11 @@ function createOrUpdateDeal() {
           {
             value: data.dealExternalId,
             propertyName: 'dealname',
-            operator: 'EQ',
-          },
-        ],
-      },
-    ],
+            operator: 'EQ'
+          }
+        ]
+      }
+    ]
   };
 
   logRequest('deal_search', 'POST', url, bodyData);
@@ -354,7 +354,7 @@ function createOrUpdateDeal() {
     url,
     {
       headers: getRequestHeaders(),
-      method: 'POST',
+      method: 'POST'
     },
     JSON.stringify(bodyData)
   ).then((result) => {
@@ -366,7 +366,7 @@ function createOrUpdateDeal() {
       let dealData = {
         properties: data.dealParameters
           ? makeTableMap(data.dealParameters, 'property', 'value')
-          : {},
+          : {}
       };
 
       dealData.properties.dealname = data.dealExternalId;
@@ -405,11 +405,11 @@ function createOrUpdateContact() {
           {
             value: data.email,
             propertyName: 'email',
-            operator: 'EQ',
-          },
-        ],
-      },
-    ],
+            operator: 'EQ'
+          }
+        ]
+      }
+    ]
   };
 
   logRequest('contact_search', 'POST', url, bodyData);
@@ -418,7 +418,7 @@ function createOrUpdateContact() {
     url,
     {
       headers: getRequestHeaders(),
-      method: 'POST',
+      method: 'POST'
     },
     JSON.stringify(bodyData)
   ).then((result) => {
@@ -434,7 +434,7 @@ function createOrUpdateContact() {
       let contactData = {
         properties: data.contactParameters
           ? makeTableMap(data.contactParameters, 'property', 'value')
-          : {},
+          : {}
       };
 
       if (data.email) contactData.properties.email = data.email;
@@ -500,7 +500,7 @@ function logResponse(statusCode, headers, body, eventName) {
         EventName: eventName,
         ResponseStatusCode: statusCode,
         ResponseHeaders: headers,
-        ResponseBody: body,
+        ResponseBody: body
       })
     );
   }
@@ -516,7 +516,7 @@ function logRequest(eventName, method, url, bodyData) {
         EventName: eventName,
         RequestMethod: method,
         RequestUrl: url,
-        RequestBody: bodyData,
+        RequestBody: bodyData
       })
     );
   }
@@ -525,7 +525,7 @@ function logRequest(eventName, method, url, bodyData) {
 function getRequestHeaders() {
   return {
     'Content-Type': 'application/json',
-    Authorization: 'Bearer ' + data.apiKey,
+    Authorization: 'Bearer ' + data.apiKey
   };
 }
 
@@ -536,7 +536,7 @@ function sendEcommerceRequest(eventName, method, url, bodyData) {
     url,
     {
       headers: getRequestHeaders(),
-      method: method,
+      method: method
     },
     JSON.stringify(bodyData)
   ).then((result) => {

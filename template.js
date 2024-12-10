@@ -601,7 +601,7 @@ function associateCustomObjectWithContact(customObjectId, contactId) {
     encodeUriComponent(customObjectId) +
     '/associations/contacts/' +
     encodeUriComponent(contactId) +
-    '/';
+    '/69';
 
   logRequest('associateCustomObjectWithContact', 'PUT', url, '');
 

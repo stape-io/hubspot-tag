@@ -444,7 +444,6 @@ const makeNumber = require('makeNumber');
 const Promise = require('Promise');
 const getAllEventData = require('getAllEventData');
 const encodeUriComponent = require('encodeUriComponent');
-const Object = require('Object');
 
 const logToConsole = require('logToConsole');
 const getContainerVersion = require('getContainerVersion');
@@ -464,7 +463,7 @@ if (type === 'trackEventPageView') {
   });
 } else if (type === 'ecommerce') {
   ecommerceEvent();
-} else if (type === 'createOrUpdateObject') { // New block for custom object
+} else if (type === 'createOrUpdateObject') {
   createOrUpdateCustomObject();
 } else {
   data.gtmOnFailure();
@@ -484,7 +483,8 @@ function trackPageViewEvent() {
       '&u=' +
       encodeUriComponent(clientId);
   }
-  if (eventData.ga_session_id) url = url + '&b=' + encodeUriComponent(eventData.ga_session_id);
+  if (eventData.ga_session_id)
+    url = url + '&b=' + encodeUriComponent(eventData.ga_session_id);
   if (eventData.page_referrer)
     url = url + '&r=' + encodeUriComponent(eventData.page_referrer);
   if (eventData.page_title)
@@ -512,7 +512,7 @@ function trackPageViewEvent() {
     {
       headers: { 'User-Agent': eventData.user_agent },
       method: 'GET',
-      timeout: 3500,
+      timeout: 3500
     }
   );
 }
@@ -523,7 +523,7 @@ function trackCustomBehavioralEvent() {
     eventName: data.customBehavioralEventEventName,
     properties: data.customBehavioralEventParameters
       ? makeTableMap(data.customBehavioralEventParameters, 'property', 'value')
-      : {},
+      : {}
   };
 
   if (data.customBehavioralEventUtk)
@@ -718,7 +718,7 @@ function getCurrentLineItems(dealId) {
     url,
     {
       headers: getRequestHeaders(),
-      method: 'GET',
+      method: 'GET'
     },
     ''
   ).then((result) => {
@@ -735,7 +735,7 @@ function getCurrentLineItems(dealId) {
       if (currentLineItemsIds.length > 0) {
         let bodyData = {
           inputs: currentLineItemsIds,
-          properties: ['hs_product_id', 'hs_sku'],
+          properties: ['hs_product_id', 'hs_sku']
         };
         url = 'https://api.hubapi.com/crm/v3/objects/line_items/batch/read';
 
@@ -745,7 +745,7 @@ function getCurrentLineItems(dealId) {
           url,
           {
             headers: getRequestHeaders(),
-            method: 'POST',
+            method: 'POST'
           },
           JSON.stringify(bodyData)
         ).then((result) => {
@@ -780,11 +780,11 @@ function createOrUpdateDeal() {
           {
             value: data.dealExternalId,
             propertyName: 'dealname',
-            operator: 'EQ',
-          },
-        ],
-      },
-    ],
+            operator: 'EQ'
+          }
+        ]
+      }
+    ]
   };
 
   logRequest('deal_search', 'POST', url, bodyData);
@@ -793,7 +793,7 @@ function createOrUpdateDeal() {
     url,
     {
       headers: getRequestHeaders(),
-      method: 'POST',
+      method: 'POST'
     },
     JSON.stringify(bodyData)
   ).then((result) => {
@@ -805,7 +805,7 @@ function createOrUpdateDeal() {
       let dealData = {
         properties: data.dealParameters
           ? makeTableMap(data.dealParameters, 'property', 'value')
-          : {},
+          : {}
       };
 
       dealData.properties.dealname = data.dealExternalId;
@@ -844,11 +844,11 @@ function createOrUpdateContact() {
           {
             value: data.email,
             propertyName: 'email',
-            operator: 'EQ',
-          },
-        ],
-      },
-    ],
+            operator: 'EQ'
+          }
+        ]
+      }
+    ]
   };
 
   logRequest('contact_search', 'POST', url, bodyData);
@@ -857,7 +857,7 @@ function createOrUpdateContact() {
     url,
     {
       headers: getRequestHeaders(),
-      method: 'POST',
+      method: 'POST'
     },
     JSON.stringify(bodyData)
   ).then((result) => {
@@ -873,7 +873,7 @@ function createOrUpdateContact() {
       let contactData = {
         properties: data.contactParameters
           ? makeTableMap(data.contactParameters, 'property', 'value')
-          : {},
+          : {}
       };
 
       if (data.email) contactData.properties.email = data.email;
@@ -939,7 +939,7 @@ function logResponse(statusCode, headers, body, eventName) {
         EventName: eventName,
         ResponseStatusCode: statusCode,
         ResponseHeaders: headers,
-        ResponseBody: body,
+        ResponseBody: body
       })
     );
   }
@@ -955,7 +955,7 @@ function logRequest(eventName, method, url, bodyData) {
         EventName: eventName,
         RequestMethod: method,
         RequestUrl: url,
-        RequestBody: bodyData,
+        RequestBody: bodyData
       })
     );
   }
@@ -964,7 +964,7 @@ function logRequest(eventName, method, url, bodyData) {
 function getRequestHeaders() {
   return {
     'Content-Type': 'application/json',
-    Authorization: 'Bearer ' + data.apiKey,
+    Authorization: 'Bearer ' + data.apiKey
   };
 }
 
@@ -975,7 +975,7 @@ function sendEcommerceRequest(eventName, method, url, bodyData) {
     url,
     {
       headers: getRequestHeaders(),
-      method: method,
+      method: method
     },
     JSON.stringify(bodyData)
   ).then((result) => {
@@ -999,7 +999,8 @@ function createOrUpdateCustomObject() {
     properties: {}
   };
   for (let i in customObjectParameters) {
-    bodyData.properties[customObjectParameters[i].key] = customObjectParameters[i].value;
+    bodyData.properties[customObjectParameters[i].key] =
+      customObjectParameters[i].value;
   }
 
   logRequest('createCustomObject', 'POST', url, bodyData);
@@ -1013,19 +1014,14 @@ function createOrUpdateCustomObject() {
         const responseData = JSON.parse(body);
         const customObjectId = responseData.id;
 
-        logToConsole('Custom Object successfully created with ID: ' + customObjectId);
-
-        // Retrieve or create the contact before associating
         createOrUpdateContact()
           .then((contactId) => {
             associateCustomObjectWithContact(customObjectId, contactId);
           })
           .catch((error) => {
-            logToConsole('Error in contact creation or retrieval: ', error);
             data.gtmOnFailure();
           });
       } else {
-        logToConsole('Failed to create custom object.');
         data.gtmOnFailure();
       }
     },
@@ -1035,48 +1031,31 @@ function createOrUpdateCustomObject() {
 }
 
 function associateCustomObjectWithContact(customObjectId, contactId) {
-  // Construct the URL for associating the custom object with the contact
   const url =
-    'https://api.hubapi.com/crm/v3/objects/' + 
-     encodeUriComponent(data.customObjectId) + '/' +    
+    'https://api.hubapi.com/crm/v3/objects/' +
+    encodeUriComponent(data.customObjectId) +
+    '/' +
     encodeUriComponent(customObjectId) +
     '/associations/contacts/' +
-    encodeUriComponent(contactId) + '/69'; // not sure why /69 is needed
+    encodeUriComponent(contactId) +
+    '/69';
 
-  // Log the association request
-  logToConsole(
-    'Initiating association of Custom Object ID: ' +
-      customObjectId +
-      ' with Contact ID: ' +
-      contactId
-  );
   logRequest('associateCustomObjectWithContact', 'PUT', url, '');
 
   // Send the association request
   sendHttpRequest(
     url,
     (statusCode, headers, body) => {
-      // Log the response details
-      logResponse(statusCode, headers, body, 'associateCustomObjectWithContact');
+      logResponse(
+        statusCode,
+        headers,
+        body,
+        'associateCustomObjectWithContact'
+      );
 
       if (statusCode >= 200 && statusCode < 300) {
-        // Log success and trigger success callback
-        logToConsole(
-          'Successfully associated Custom Object ID: ' +
-            customObjectId +
-            ' with Contact ID: ' +
-            contactId
-        );
         data.gtmOnSuccess();
       } else {
-        // Log failure and trigger failure callback
-        logToConsole(
-          'Failed to associate Custom Object ID: ' +
-            customObjectId +
-            ' with Contact ID: ' +
-            contactId
-        );
-        logToConsole('Response Body: ' + body);
         data.gtmOnFailure();
       }
     },

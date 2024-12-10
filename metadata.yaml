@@ -1,5 +1,7 @@
 homepage: 'https://stape.io/'
 versions:
+  - sha: 6842852ed352c0055840ce7dd14cc72f3a3190c1
+    changeNotes: Support for Custom Objects.
   - sha: 509b20ff3f529cf48e61912bd5b72ab889de4b06
     changeNotes: Support for PageView event track.
   - sha: 91cd5675ce8be47d783db3123ac20979e22065be

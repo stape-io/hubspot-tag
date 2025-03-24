@@ -125,6 +125,11 @@ ___TEMPLATE_PARAMETERS___
           },
           {
             "paramName": "type",
+            "paramValue": "createOrUpdateObject",
+            "type": "EQUALS"
+          },
+          {
+            "paramName": "type",
             "paramValue": "identifyVisitor",
             "type": "EQUALS"
           }

@@ -1,6 +1,6 @@
 homepage: 'https://stape.io/'
 versions:
-  - sha: 376a3b903ce6d13ad41ead52f856e27249cba856
+  - sha: ac7c46d255a1f15f4b5bcd6af14d923640ea6f26
     changeNotes: Support for Visitor Identification.
   - sha: 6842852ed352c0055840ce7dd14cc72f3a3190c1
     changeNotes: Support for Custom Objects.

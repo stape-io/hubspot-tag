@@ -7,30 +7,45 @@ const makeNumber = require('makeNumber');
 const Promise = require('Promise');
 const getAllEventData = require('getAllEventData');
 const encodeUriComponent = require('encodeUriComponent');
-
 const logToConsole = require('logToConsole');
 const getContainerVersion = require('getContainerVersion');
+
+/******************************************************************************/
+
 const isLoggingEnabled = determinateIsLoggingEnabled();
 const traceId = getRequestHeader('trace-id');
 const eventData = getAllEventData();
 
-let type = data.type;
-
-if (type === 'trackEventPageView') {
-  trackPageViewEvent();
-} else if (type === 'trackCustomBehavioralEvent') {
-  trackCustomBehavioralEvent();
-} else if (type === 'createOrUpdateContact') {
-  createOrUpdateContact().then(() => {
-    data.gtmOnSuccess();
-  });
-} else if (type === 'ecommerce') {
-  ecommerceEvent();
-} else if (type === 'createOrUpdateObject') {
-  createOrUpdateCustomObject();
-} else {
-  data.gtmOnFailure();
+if (!isConsentGivenOrNotRequired()) {
+  return data.gtmOnSuccess();
 }
+
+const url = eventData.page_location || getRequestHeader('referer');
+if (url && url.lastIndexOf('https://gtm-msr.appspot.com/', 0) === 0) {
+  return data.gtmOnSuccess();
+}
+
+const actionHandlers = {
+  trackEventPageView: trackPageViewEvent,
+  trackCustomBehavioralEvent: trackCustomBehavioralEvent,
+  createOrUpdateContact: () => {
+    createOrUpdateContact().then(() => {
+      data.gtmOnSuccess();
+    });
+  },
+  ecommerce: ecommerceEvent,
+  createOrUpdateObject: createOrUpdateCustomObject,
+  identifyVisitor: identifyVisitorEvent
+};
+
+const handler = actionHandlers[data.type];
+if (handler) {
+  handler();
+} else {
+  data.onGtmFailure();
+}
+
+/******************************************************************************/
 
 function trackPageViewEvent() {
   let url =
@@ -81,8 +96,8 @@ function trackPageViewEvent() {
 }
 
 function trackCustomBehavioralEvent() {
-  let url = 'https://api.hubapi.com/events/v3/send';
-  let bodyData = {
+  const url = 'https://api.hubapi.com/events/v3/send';
+  const bodyData = {
     eventName: data.customBehavioralEventEventName,
     properties: data.customBehavioralEventParameters
       ? makeTableMap(data.customBehavioralEventParameters, 'property', 'value')
@@ -175,7 +190,7 @@ function createDealLineItems(dealId, products) {
         }
       }
 
-      let lineItem = products[i];
+      const lineItem = products[i];
 
       if (products[i].quantity)
         lineItem.quantity = makeInteger(products[i].quantity);
@@ -248,7 +263,7 @@ function removeDealLineItems(dealId, products) {
 }
 
 function associateDealToContact(dealId, contactId) {
-  let url =
+  const url =
     'https://api.hubapi.com/crm/v3/objects/deals/' +
     dealId +
     '/associations/contact/' +
@@ -259,7 +274,7 @@ function associateDealToContact(dealId, contactId) {
 }
 
 function associateDealToLineItem(dealId, lineItemId) {
-  let url =
+  const url =
     'https://api.hubapi.com/crm/v3/objects/deals/' +
     dealId +
     '/associations/line_items/' +
@@ -270,7 +285,7 @@ function associateDealToLineItem(dealId, lineItemId) {
 }
 
 function getCurrentLineItems(dealId) {
-  let url =
+  const url =
     'https://api.hubapi.com/crm/v3/objects/deals/' +
     dealId +
     '/associations/line_items';
@@ -293,14 +308,15 @@ function getCurrentLineItems(dealId) {
     );
 
     if (result.statusCode >= 200 && result.statusCode < 300) {
-      let currentLineItemsIds = JSON.parse(result.body).results;
+      const currentLineItemsIds = JSON.parse(result.body).results;
 
       if (currentLineItemsIds.length > 0) {
-        let bodyData = {
+        const bodyData = {
           inputs: currentLineItemsIds,
           properties: ['hs_product_id', 'hs_sku']
         };
-        url = 'https://api.hubapi.com/crm/v3/objects/line_items/batch/read';
+        const url =
+          'https://api.hubapi.com/crm/v3/objects/line_items/batch/read';
 
         logRequest('get_current_line_items', 'POST', url, bodyData);
 
@@ -335,8 +351,8 @@ function getCurrentLineItems(dealId) {
 }
 
 function createOrUpdateDeal() {
-  let url = 'https://api.hubapi.com/crm/v3/objects/deals/search';
-  let bodyData = {
+  const url = 'https://api.hubapi.com/crm/v3/objects/deals/search';
+  const bodyData = {
     filterGroups: [
       {
         filters: [
@@ -364,8 +380,8 @@ function createOrUpdateDeal() {
 
     if (result.statusCode >= 200 && result.statusCode < 300) {
       let dealId;
-      let parsedBody = JSON.parse(result.body);
-      let dealData = {
+      const parsedBody = JSON.parse(result.body);
+      const dealData = {
         properties: data.dealParameters
           ? makeTableMap(data.dealParameters, 'property', 'value')
           : {}
@@ -399,8 +415,8 @@ function createOrUpdateDeal() {
 }
 
 function createOrUpdateContact() {
-  let url = 'https://api.hubapi.com/crm/v3/objects/contacts/search';
-  let bodyData = {
+  const url = 'https://api.hubapi.com/crm/v3/objects/contacts/search';
+  const bodyData = {
     filterGroups: [
       {
         filters: [
@@ -432,8 +448,8 @@ function createOrUpdateContact() {
     );
 
     if (result.statusCode >= 200 && result.statusCode < 300) {
-      let parsedBody = JSON.parse(result.body);
-      let contactData = {
+      const parsedBody = JSON.parse(result.body);
+      const contactData = {
         properties: data.contactParameters
           ? makeTableMap(data.contactParameters, 'property', 'value')
           : {}
@@ -448,7 +464,7 @@ function createOrUpdateContact() {
         contactData.properties.mobilephone = data.contactPhone;
 
       if (makeInteger(parsedBody.total) > 0) {
-        let contactID = parsedBody.results[0].id;
+        const contactID = parsedBody.results[0].id;
 
         return sendEcommerceRequest(
           'contact_update',
@@ -468,67 +484,6 @@ function createOrUpdateContact() {
       data.gtmOnFailure();
     }
   });
-}
-
-function determinateIsLoggingEnabled() {
-  const containerVersion = getContainerVersion();
-  const isDebug = !!(
-    containerVersion &&
-    (containerVersion.debugMode || containerVersion.previewMode)
-  );
-
-  if (!data.logType) {
-    return isDebug;
-  }
-
-  if (data.logType === 'no') {
-    return false;
-  }
-
-  if (data.logType === 'debug') {
-    return isDebug;
-  }
-
-  return data.logType === 'always';
-}
-
-function logResponse(statusCode, headers, body, eventName) {
-  if (isLoggingEnabled) {
-    logToConsole(
-      JSON.stringify({
-        Name: 'HubSpot',
-        Type: 'Response',
-        TraceId: traceId,
-        EventName: eventName,
-        ResponseStatusCode: statusCode,
-        ResponseHeaders: headers,
-        ResponseBody: body
-      })
-    );
-  }
-}
-
-function logRequest(eventName, method, url, bodyData) {
-  if (isLoggingEnabled) {
-    logToConsole(
-      JSON.stringify({
-        Name: 'HubSpot',
-        Type: 'Request',
-        TraceId: traceId,
-        EventName: eventName,
-        RequestMethod: method,
-        RequestUrl: url,
-        RequestBody: bodyData
-      })
-    );
-  }
-}
-
-function getRequestHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: 'Bearer ' + data.apiKey
-  };
 }
 
 function sendEcommerceRequest(eventName, method, url, bodyData) {
@@ -558,7 +513,7 @@ function createOrUpdateCustomObject() {
   const url = 'https://api.hubapi.com/crm/v3/objects/' + data.customObjectId;
 
   const customObjectParameters = data.customObjectParameters;
-  let bodyData = {
+  const bodyData = {
     properties: {}
   };
   for (let i in customObjectParameters) {
@@ -624,4 +579,99 @@ function associateCustomObjectWithContact(customObjectId, contactId) {
     },
     { headers: getRequestHeaders(), method: 'PUT' }
   );
+}
+
+function identifyVisitorEvent() {
+  // This endpoit also works, it's present in old docs.
+  // 'https://api.hubapi.com/conversations/v3/visitor-identification/tokens/create'
+  const url = 'https://api.hubapi.com/visitor-identification/v3/tokens/create';
+
+  const bodyData = {
+    firstName: data.firstName,
+    lastName: data.lastName,
+    email: data.email
+  };
+
+  logRequest('identifyVisitorEvent', 'POST', url, bodyData);
+
+  sendHttpRequest(
+    url,
+    (statusCode, headers, body) => {
+      logResponse(statusCode, headers, body, 'identifyVisitorEvent');
+
+      if (statusCode >= 200 && statusCode < 300) {
+        data.gtmOnSuccess();
+      } else {
+        data.gtmOnFailure();
+      }
+    },
+    { headers: getRequestHeaders(), method: 'POST' },
+    JSON.stringify(bodyData)
+  );
+}
+
+function getRequestHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    Authorization: 'Bearer ' + data.apiKey
+  };
+}
+
+function logResponse(statusCode, headers, body, eventName) {
+  log({
+    Name: 'HubSpot',
+    Type: 'Response',
+    TraceId: traceId,
+    EventName: eventName,
+    ResponseStatusCode: statusCode,
+    ResponseHeaders: headers,
+    ResponseBody: body
+  });
+}
+
+function logRequest(eventName, method, url, bodyData) {
+  log({
+    Name: 'HubSpot',
+    Type: 'Request',
+    TraceId: traceId,
+    EventName: eventName,
+    RequestMethod: method,
+    RequestUrl: url,
+    RequestBody: bodyData
+  });
+}
+
+function log(logObject) {
+  if (isLoggingEnabled) {
+    logToConsole(JSON.stringify(logObject));
+  }
+}
+
+function determinateIsLoggingEnabled() {
+  const containerVersion = getContainerVersion();
+  const isDebug = !!(
+    containerVersion &&
+    (containerVersion.debugMode || containerVersion.previewMode)
+  );
+
+  if (!data.logType) {
+    return isDebug;
+  }
+
+  if (data.logType === 'no') {
+    return false;
+  }
+
+  if (data.logType === 'debug') {
+    return isDebug;
+  }
+
+  return data.logType === 'always';
+}
+
+function isConsentGivenOrNotRequired() {
+  if (data.adStorageConsent !== 'required') return true;
+  if (eventData.consent_state) return !!eventData.consent_state.ad_storage;
+  const xGaGcs = eventData['x-ga-gcs'] || ''; // x-ga-gcs is a string like "G110"
+  return xGaGcs[2] === '1';
 }

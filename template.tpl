@@ -575,7 +575,7 @@ const handler = actionHandlers[data.type];
 if (handler) {
   handler();
 } else {
-  data.onGtmFailure();
+  data.gtmOnFailure();
 }
 
 /******************************************************************************/

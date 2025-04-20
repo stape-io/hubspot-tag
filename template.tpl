@@ -59,7 +59,7 @@ ___TEMPLATE_PARAMETERS___
       },
       {
         "value": "createOrUpdateObject",
-        "displayValue": "Create or Update a custom object"
+        "displayValue": "Create or Update a Custom Object"
       },
       {
         "value": "identifyVisitor",
@@ -265,15 +265,34 @@ ___TEMPLATE_PARAMETERS___
   {
     "type": "GROUP",
     "name": "customObjectEventParametersGroup",
-    "displayName": "Custom Behavioral Event Parameters",
+    "displayName": "Custom Object Parameters",
     "groupStyle": "ZIPPY_OPEN",
     "subParams": [
       {
         "type": "TEXT",
         "name": "customObjectId",
-        "displayName": "Object Id",
+        "displayName": "Custom Object Type ID",
         "simpleValueType": true,
-        "help": "The custom object id"
+        "help": "The Custom Object Type ID.\u003cbr/\u003eYou can locate it within the URL when navigating to the custom object\u0027s dashboard within your HubSpot portal.\n\u003cbr/\u003e\n\u003cbr/\u003e\nExample: in the URL https://app.hubspot.com/contacts/5555555/objects/\u003cb\u003e2-1234567\u003c/b\u003e/views/all/list, the object ID is \u003cb\u003e2-1234567\u003c/b\u003e.",
+        "valueValidators": [
+          {
+            "type": "NON_EMPTY"
+          }
+        ],
+        "valueHint": "2-1234567"
+      },
+      {
+        "type": "TEXT",
+        "name": "customObjectAndContactAssociationTypeId",
+        "displayName": "Custom Object and Contact Association Type ID",
+        "simpleValueType": true,
+        "help": "The Association Type ID of your Custom Object with the Contact Object.\n\u003cbr/\u003e\n\u003cbr/\u003e\nYou can locate it using the HubSpot portal or the API.\n\u003cul\u003e\n\u003cli\u003e\nHubSpot portal\n\u003cul\u003e\n\u003cli\u003e\u003ca href\u003d\"https://knowledge.hubspot.com/object-settings/create-and-use-association-labels#association-label-api-details\"\u003eLearn more\u003c/a\u003e.\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e\n\u003cli\u003e\nAPI\n\u003cul\u003e\n\u003cli\u003ev3: \u003ca href\u003d\"https://developers.hubspot.com/docs/guides/api/crm/associations/associations-v3#retrieve-association-types\"\u003edocumentation\u003c/a\u003e\u003c/li\u003e\n\u003cli\u003ev4: \u003ca href\u003d\"https://developers.hubspot.com/docs/guides/api/crm/associations/associations-v4#retrieve-association-labels\"\u003edocumentation\u003c/a\u003e\u003c/li\u003e\n\u003c/ul\u003e\n\u003c/li\u003e\n\u003c/ul\u003e",
+        "valueValidators": [
+          {
+            "type": "NON_EMPTY"
+          }
+        ],
+        "valueHint": "123"
       },
       {
         "type": "SIMPLE_TABLE",
@@ -293,8 +312,13 @@ ___TEMPLATE_PARAMETERS___
             "type": "TEXT"
           }
         ],
-        "help": "Map of properties for the event in the format property internal name - property value.",
-        "displayName": "Properties"
+        "help": "Map of properties for the custom object.",
+        "displayName": "Properties",
+        "valueValidators": [
+          {
+            "type": "NON_EMPTY"
+          }
+        ]
       }
     ],
     "enablingConditions": [
@@ -1043,7 +1067,10 @@ function sendEcommerceRequest(eventName, method, url, bodyData) {
 }
 
 function createOrUpdateCustomObject() {
-  const url = 'https://api.hubapi.com/crm/v3/objects/' + data.customObjectId;
+  const url =
+    'https://api.hubapi.com/crm/v3/objects/' +
+    // This is actually the Object Type ID (not the Object ID).
+    data.customObjectId;
 
   const customObjectParameters = data.customObjectParameters;
   const bodyData = {
@@ -1063,7 +1090,7 @@ function createOrUpdateCustomObject() {
 
       if (statusCode >= 200 && statusCode < 300) {
         const responseData = JSON.parse(body);
-        const customObjectId = responseData.id;
+        const customObjectId = responseData.id; // This is the Object ID.
 
         createOrUpdateContact()
           .then((contactId) => {
@@ -1084,12 +1111,14 @@ function createOrUpdateCustomObject() {
 function associateCustomObjectWithContact(customObjectId, contactId) {
   const url =
     'https://api.hubapi.com/crm/v3/objects/' +
+    // This is actually the Object Type ID (not the Object ID).
     encodeUriComponent(data.customObjectId) +
     '/' +
-    encodeUriComponent(customObjectId) +
+    encodeUriComponent(customObjectId) + // This is the Object ID.
     '/associations/contacts/' +
     encodeUriComponent(contactId) +
-    '/69';
+    '/' +
+    encodeUriComponent(data.customObjectAndContactAssociationTypeId);
 
   logRequest('associateCustomObjectWithContact', 'PUT', url, '');
 
@@ -1465,5 +1494,4 @@ setup: |-
 ___NOTES___
 
 Created on 02/05/2021, 09:39:23
-
 

@@ -1,5 +1,7 @@
 homepage: 'https://stape.io/'
 versions:
+  - sha: 8b14d492116d07d82478da9277ba7d107649ec95
+    changeNotes: Fix endpoint to associate Custom Object and Contact.
   - sha: c7d260bbedb081ed41c4aaa84e3810d210102e41
     changeNotes: Fix failure handler typo.
   - sha: ac7c46d255a1f15f4b5bcd6af14d923640ea6f26

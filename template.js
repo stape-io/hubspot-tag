@@ -510,7 +510,10 @@ function sendEcommerceRequest(eventName, method, url, bodyData) {
 }
 
 function createOrUpdateCustomObject() {
-  const url = 'https://api.hubapi.com/crm/v3/objects/' + data.customObjectId;
+  const url =
+    'https://api.hubapi.com/crm/v3/objects/' +
+    // This is actually the Object Type ID (not the Object ID).
+    data.customObjectId;
 
   const customObjectParameters = data.customObjectParameters;
   const bodyData = {
@@ -530,7 +533,7 @@ function createOrUpdateCustomObject() {
 
       if (statusCode >= 200 && statusCode < 300) {
         const responseData = JSON.parse(body);
-        const customObjectId = responseData.id;
+        const customObjectId = responseData.id; // This is the Object ID.
 
         createOrUpdateContact()
           .then((contactId) => {
@@ -551,12 +554,14 @@ function createOrUpdateCustomObject() {
 function associateCustomObjectWithContact(customObjectId, contactId) {
   const url =
     'https://api.hubapi.com/crm/v3/objects/' +
+    // This is actually the Object Type ID (not the Object ID).
     encodeUriComponent(data.customObjectId) +
     '/' +
-    encodeUriComponent(customObjectId) +
+    encodeUriComponent(customObjectId) + // This is the Object ID.
     '/associations/contacts/' +
     encodeUriComponent(contactId) +
-    '/69';
+    '/' +
+    encodeUriComponent(data.customObjectAndContactAssociationTypeId);
 
   logRequest('associateCustomObjectWithContact', 'PUT', url, '');
 

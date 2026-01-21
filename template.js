@@ -1,16 +1,17 @@
-﻿const sendHttpRequest = require('sendHttpRequest');
-const JSON = require('JSON');
+﻿const encodeUriComponent = require('encodeUriComponent');
+const getAllEventData = require('getAllEventData');
+const getContainerVersion = require('getContainerVersion');
 const getRequestHeader = require('getRequestHeader');
-const makeTableMap = require('makeTableMap');
+const JSON = require('JSON');
+const logToConsole = require('logToConsole');
 const makeInteger = require('makeInteger');
 const makeNumber = require('makeNumber');
+const makeTableMap = require('makeTableMap');
 const Promise = require('Promise');
-const getAllEventData = require('getAllEventData');
-const encodeUriComponent = require('encodeUriComponent');
-const logToConsole = require('logToConsole');
-const getContainerVersion = require('getContainerVersion');
+const sendHttpRequest = require('sendHttpRequest');
 
-/******************************************************************************/
+/*==============================================================================
+==============================================================================*/
 
 const isLoggingEnabled = determinateIsLoggingEnabled();
 const traceId = getRequestHeader('trace-id');
@@ -45,34 +46,25 @@ if (handler) {
   data.gtmOnFailure();
 }
 
-/******************************************************************************/
+/*==============================================================================
+Vendor related functions
+==============================================================================*/
 
 function trackPageViewEvent() {
   let url =
-    'https://track.hubspot.com/__ptq.gif?k=1&v=1.1&ct=' +
-    encodeUriComponent('standard-page');
+    'https://track.hubspot.com/__ptq.gif?k=1&v=1.1&ct=' + encodeUriComponent('standard-page');
   const clientId = eventData.client_id;
   if (data.accountId) url = url + '&a=' + encodeUriComponent(data.accountId);
   if (clientId) {
-    url =
-      url +
-      '&vi=' +
-      encodeUriComponent(clientId) +
-      '&u=' +
-      encodeUriComponent(clientId);
+    url = url + '&vi=' + encodeUriComponent(clientId) + '&u=' + encodeUriComponent(clientId);
   }
-  if (eventData.ga_session_id)
-    url = url + '&b=' + encodeUriComponent(eventData.ga_session_id);
-  if (eventData.page_referrer)
-    url = url + '&r=' + encodeUriComponent(eventData.page_referrer);
-  if (eventData.page_title)
-    url = url + '&t=' + encodeUriComponent(eventData.page_title);
-  if (eventData.page_location)
-    url = url + '&pu=' + encodeUriComponent(eventData.page_location);
+  if (eventData.ga_session_id) url = url + '&b=' + encodeUriComponent(eventData.ga_session_id);
+  if (eventData.page_referrer) url = url + '&r=' + encodeUriComponent(eventData.page_referrer);
+  if (eventData.page_title) url = url + '&t=' + encodeUriComponent(eventData.page_title);
+  if (eventData.page_location) url = url + '&pu=' + encodeUriComponent(eventData.page_location);
   if (eventData.screen_resolution)
     url = url + '&sd=' + encodeUriComponent(eventData.screen_resolution);
-  if (eventData.page_encoding)
-    url = url + '&cs=' + encodeUriComponent(eventData.page_encoding);
+  if (eventData.page_encoding) url = url + '&cs=' + encodeUriComponent(eventData.page_encoding);
 
   logRequest('page_view', 'GET', url, '');
 
@@ -104,11 +96,9 @@ function trackCustomBehavioralEvent() {
       : {}
   };
 
-  if (data.customBehavioralEventUtk)
-    bodyData.utk = data.customBehavioralEventUtk;
+  if (data.customBehavioralEventUtk) bodyData.utk = data.customBehavioralEventUtk;
   if (data.email) bodyData.email = data.email;
-  if (data.customBehavioralEventObjectId)
-    bodyData.objectId = data.customBehavioralEventObjectId;
+  if (data.customBehavioralEventObjectId) bodyData.objectId = data.customBehavioralEventObjectId;
   if (data.customBehavioralEventOccurredAt)
     bodyData.occurredAt = data.customBehavioralEventOccurredAt;
 
@@ -117,12 +107,7 @@ function trackCustomBehavioralEvent() {
   sendHttpRequest(
     url,
     (statusCode, headers, body) => {
-      logResponse(
-        statusCode,
-        headers,
-        body,
-        data.customBehavioralEventEventName
-      );
+      logResponse(statusCode, headers, body, data.customBehavioralEventEventName);
 
       if (statusCode >= 200 && statusCode < 300) {
         data.gtmOnSuccess();
@@ -192,12 +177,9 @@ function createDealLineItems(dealId, products) {
 
       const lineItem = products[i];
 
-      if (products[i].quantity)
-        lineItem.quantity = makeInteger(products[i].quantity);
-      if (products[i].quantity)
-        lineItem.num_items = makeInteger(products[i].quantity);
-      if (products[i].quantity)
-        lineItem.quantity_per_line = makeInteger(products[i].quantity);
+      if (products[i].quantity) lineItem.quantity = makeInteger(products[i].quantity);
+      if (products[i].quantity) lineItem.num_items = makeInteger(products[i].quantity);
+      if (products[i].quantity) lineItem.quantity_per_line = makeInteger(products[i].quantity);
 
       if (products[i].price) lineItem.price = makeNumber(products[i].price);
       if (products[i].price) lineItem.amount = makeNumber(products[i].price);
@@ -210,9 +192,7 @@ function createDealLineItems(dealId, products) {
         sendEcommerceRequest(
           'product_get',
           'GET',
-          'https://api.hubapi.com/crm/v3/objects/products/' +
-            products[i].id +
-            '?idProperty=hs_sku',
+          'https://api.hubapi.com/crm/v3/objects/products/' + products[i].id + '?idProperty=hs_sku',
           ''
         ).then((productId) => {
           lineItem.sku = makeInteger(products[i].id);
@@ -251,8 +231,7 @@ function removeDealLineItems(dealId, products) {
             sendEcommerceRequest(
               'line_item_delete',
               'DELETE',
-              'https://api.hubapi.com/crm/v3/objects/line_items/' +
-                currentLineItems[l].id,
+              'https://api.hubapi.com/crm/v3/objects/line_items/' + currentLineItems[l].id,
               ''
             );
           }
@@ -285,10 +264,7 @@ function associateDealToLineItem(dealId, lineItemId) {
 }
 
 function getCurrentLineItems(dealId) {
-  const url =
-    'https://api.hubapi.com/crm/v3/objects/deals/' +
-    dealId +
-    '/associations/line_items';
+  const url = 'https://api.hubapi.com/crm/v3/objects/deals/' + dealId + '/associations/line_items';
 
   logRequest('get_current_line_item_ids', 'GET', url, '');
 
@@ -300,12 +276,7 @@ function getCurrentLineItems(dealId) {
     },
     ''
   ).then((result) => {
-    logResponse(
-      result.statusCode,
-      result.headers,
-      result.body,
-      'get_current_line_item_ids'
-    );
+    logResponse(result.statusCode, result.headers, result.body, 'get_current_line_item_ids');
 
     if (result.statusCode >= 200 && result.statusCode < 300) {
       const currentLineItemsIds = JSON.parse(result.body).results;
@@ -315,8 +286,7 @@ function getCurrentLineItems(dealId) {
           inputs: currentLineItemsIds,
           properties: ['hs_product_id', 'hs_sku']
         };
-        const url =
-          'https://api.hubapi.com/crm/v3/objects/line_items/batch/read';
+        const url = 'https://api.hubapi.com/crm/v3/objects/line_items/batch/read';
 
         logRequest('get_current_line_items', 'POST', url, bodyData);
 
@@ -328,12 +298,7 @@ function getCurrentLineItems(dealId) {
           },
           JSON.stringify(bodyData)
         ).then((result) => {
-          logResponse(
-            result.statusCode,
-            result.headers,
-            result.body,
-            'get_current_line_items'
-          );
+          logResponse(result.statusCode, result.headers, result.body, 'get_current_line_items');
 
           if (result.statusCode >= 200 && result.statusCode < 300) {
             return JSON.parse(result.body).results;
@@ -394,8 +359,7 @@ function createOrUpdateDeal() {
         dealId = sendEcommerceRequest(
           'deal_update',
           'PATCH',
-          'https://api.hubapi.com/crm/v3/objects/deals/' +
-            parsedBody.results[0].id,
+          'https://api.hubapi.com/crm/v3/objects/deals/' + parsedBody.results[0].id,
           dealData
         );
       } else {
@@ -440,12 +404,7 @@ function createOrUpdateContact() {
     },
     JSON.stringify(bodyData)
   ).then((result) => {
-    logResponse(
-      result.statusCode,
-      result.headers,
-      result.body,
-      'contact_search'
-    );
+    logResponse(result.statusCode, result.headers, result.body, 'contact_search');
 
     if (result.statusCode >= 200 && result.statusCode < 300) {
       const parsedBody = JSON.parse(result.body);
@@ -456,12 +415,9 @@ function createOrUpdateContact() {
       };
 
       if (data.email) contactData.properties.email = data.email;
-      if (data.contactFirstName)
-        contactData.properties.firstname = data.contactFirstName;
-      if (data.contactLastName)
-        contactData.properties.lastname = data.contactLastName;
-      if (data.contactPhone)
-        contactData.properties.mobilephone = data.contactPhone;
+      if (data.contactFirstName) contactData.properties.firstname = data.contactFirstName;
+      if (data.contactLastName) contactData.properties.lastname = data.contactLastName;
+      if (data.contactPhone) contactData.properties.mobilephone = data.contactPhone;
 
       if (makeInteger(parsedBody.total) > 0) {
         const contactID = parsedBody.results[0].id;
@@ -520,8 +476,7 @@ function createOrUpdateCustomObject() {
     properties: {}
   };
   for (let i in customObjectParameters) {
-    bodyData.properties[customObjectParameters[i].key] =
-      customObjectParameters[i].value;
+    bodyData.properties[customObjectParameters[i].key] = customObjectParameters[i].value;
   }
 
   logRequest('createCustomObject', 'POST', url, bodyData);
@@ -569,12 +524,7 @@ function associateCustomObjectWithContact(customObjectId, contactId) {
   sendHttpRequest(
     url,
     (statusCode, headers, body) => {
-      logResponse(
-        statusCode,
-        headers,
-        body,
-        'associateCustomObjectWithContact'
-      );
+      logResponse(statusCode, headers, body, 'associateCustomObjectWithContact');
 
       if (statusCode >= 200 && statusCode < 300) {
         data.gtmOnSuccess();
@@ -614,6 +564,10 @@ function identifyVisitorEvent() {
     JSON.stringify(bodyData)
   );
 }
+
+/*==============================================================================
+  Helpers
+==============================================================================*/
 
 function getRequestHeaders() {
   return {

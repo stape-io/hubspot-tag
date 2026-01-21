@@ -1,4 +1,5 @@
 homepage: 'https://stape.io/'
+documentation: 'https://github.com/stape-io/hubspot-tag'
 versions:
   - sha: 8b14d492116d07d82478da9277ba7d107649ec95
     changeNotes: Fix endpoint to associate Custom Object and Contact.

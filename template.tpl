@@ -23,7 +23,7 @@ ___INFO___
   ],
   "brand": {
     "id": "brand_dummy",
-    "displayName": "Stape",
+    "displayName": "stape.io",
     "thumbnail": "data:image/png;base64,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\u003d"
   },
   "description": "Tracks page views, custom events, ecommerce events, updates contacts, sends visitor identification and integrates with HubSpot APIs (Events, Analytics, Contacts, Deals, Conversations).",
@@ -499,14 +499,13 @@ ___TEMPLATE_PARAMETERS___
   },
   {
     "type": "GROUP",
-    "name": "consentSettingsGroup",
-    "displayName": "Consent Settings",
+    "name": "tagExecutionConsentSettingsGroup",
+    "displayName": "Tag Execution Consent Settings",
     "groupStyle": "ZIPPY_CLOSED",
     "subParams": [
       {
         "type": "RADIO",
         "name": "adStorageConsent",
-        "displayName": "",
         "radioItems": [
           {
             "value": "optional",
@@ -514,7 +513,8 @@ ___TEMPLATE_PARAMETERS___
           },
           {
             "value": "required",
-            "displayValue": "Send data in case marketing consent given"
+            "displayValue": "Send data in case marketing consent given",
+            "help": "Aborts the tag execution if marketing consent (\u003ci\u003ead_storage\u003c/i\u003e Google Consent Mode or Stape\u0027s Data Tag parameter) is not given."
           }
         ],
         "simpleValueType": true,
@@ -555,19 +555,20 @@ ___TEMPLATE_PARAMETERS___
 
 ___SANDBOXED_JS_FOR_SERVER___
 
-const sendHttpRequest = require('sendHttpRequest');
-const JSON = require('JSON');
+const encodeUriComponent = require('encodeUriComponent');
+const getAllEventData = require('getAllEventData');
+const getContainerVersion = require('getContainerVersion');
 const getRequestHeader = require('getRequestHeader');
-const makeTableMap = require('makeTableMap');
+const JSON = require('JSON');
+const logToConsole = require('logToConsole');
 const makeInteger = require('makeInteger');
 const makeNumber = require('makeNumber');
+const makeTableMap = require('makeTableMap');
 const Promise = require('Promise');
-const getAllEventData = require('getAllEventData');
-const encodeUriComponent = require('encodeUriComponent');
-const logToConsole = require('logToConsole');
-const getContainerVersion = require('getContainerVersion');
+const sendHttpRequest = require('sendHttpRequest');
 
-/******************************************************************************/
+/*==============================================================================
+==============================================================================*/
 
 const isLoggingEnabled = determinateIsLoggingEnabled();
 const traceId = getRequestHeader('trace-id');
@@ -602,34 +603,25 @@ if (handler) {
   data.gtmOnFailure();
 }
 
-/******************************************************************************/
+/*==============================================================================
+Vendor related functions
+==============================================================================*/
 
 function trackPageViewEvent() {
   let url =
-    'https://track.hubspot.com/__ptq.gif?k=1&v=1.1&ct=' +
-    encodeUriComponent('standard-page');
+    'https://track.hubspot.com/__ptq.gif?k=1&v=1.1&ct=' + encodeUriComponent('standard-page');
   const clientId = eventData.client_id;
   if (data.accountId) url = url + '&a=' + encodeUriComponent(data.accountId);
   if (clientId) {
-    url =
-      url +
-      '&vi=' +
-      encodeUriComponent(clientId) +
-      '&u=' +
-      encodeUriComponent(clientId);
+    url = url + '&vi=' + encodeUriComponent(clientId) + '&u=' + encodeUriComponent(clientId);
   }
-  if (eventData.ga_session_id)
-    url = url + '&b=' + encodeUriComponent(eventData.ga_session_id);
-  if (eventData.page_referrer)
-    url = url + '&r=' + encodeUriComponent(eventData.page_referrer);
-  if (eventData.page_title)
-    url = url + '&t=' + encodeUriComponent(eventData.page_title);
-  if (eventData.page_location)
-    url = url + '&pu=' + encodeUriComponent(eventData.page_location);
+  if (eventData.ga_session_id) url = url + '&b=' + encodeUriComponent(eventData.ga_session_id);
+  if (eventData.page_referrer) url = url + '&r=' + encodeUriComponent(eventData.page_referrer);
+  if (eventData.page_title) url = url + '&t=' + encodeUriComponent(eventData.page_title);
+  if (eventData.page_location) url = url + '&pu=' + encodeUriComponent(eventData.page_location);
   if (eventData.screen_resolution)
     url = url + '&sd=' + encodeUriComponent(eventData.screen_resolution);
-  if (eventData.page_encoding)
-    url = url + '&cs=' + encodeUriComponent(eventData.page_encoding);
+  if (eventData.page_encoding) url = url + '&cs=' + encodeUriComponent(eventData.page_encoding);
 
   logRequest('page_view', 'GET', url, '');
 
@@ -661,11 +653,9 @@ function trackCustomBehavioralEvent() {
       : {}
   };
 
-  if (data.customBehavioralEventUtk)
-    bodyData.utk = data.customBehavioralEventUtk;
+  if (data.customBehavioralEventUtk) bodyData.utk = data.customBehavioralEventUtk;
   if (data.email) bodyData.email = data.email;
-  if (data.customBehavioralEventObjectId)
-    bodyData.objectId = data.customBehavioralEventObjectId;
+  if (data.customBehavioralEventObjectId) bodyData.objectId = data.customBehavioralEventObjectId;
   if (data.customBehavioralEventOccurredAt)
     bodyData.occurredAt = data.customBehavioralEventOccurredAt;
 
@@ -674,12 +664,7 @@ function trackCustomBehavioralEvent() {
   sendHttpRequest(
     url,
     (statusCode, headers, body) => {
-      logResponse(
-        statusCode,
-        headers,
-        body,
-        data.customBehavioralEventEventName
-      );
+      logResponse(statusCode, headers, body, data.customBehavioralEventEventName);
 
       if (statusCode >= 200 && statusCode < 300) {
         data.gtmOnSuccess();
@@ -749,12 +734,9 @@ function createDealLineItems(dealId, products) {
 
       const lineItem = products[i];
 
-      if (products[i].quantity)
-        lineItem.quantity = makeInteger(products[i].quantity);
-      if (products[i].quantity)
-        lineItem.num_items = makeInteger(products[i].quantity);
-      if (products[i].quantity)
-        lineItem.quantity_per_line = makeInteger(products[i].quantity);
+      if (products[i].quantity) lineItem.quantity = makeInteger(products[i].quantity);
+      if (products[i].quantity) lineItem.num_items = makeInteger(products[i].quantity);
+      if (products[i].quantity) lineItem.quantity_per_line = makeInteger(products[i].quantity);
 
       if (products[i].price) lineItem.price = makeNumber(products[i].price);
       if (products[i].price) lineItem.amount = makeNumber(products[i].price);
@@ -767,9 +749,7 @@ function createDealLineItems(dealId, products) {
         sendEcommerceRequest(
           'product_get',
           'GET',
-          'https://api.hubapi.com/crm/v3/objects/products/' +
-            products[i].id +
-            '?idProperty=hs_sku',
+          'https://api.hubapi.com/crm/v3/objects/products/' + products[i].id + '?idProperty=hs_sku',
           ''
         ).then((productId) => {
           lineItem.sku = makeInteger(products[i].id);
@@ -808,8 +788,7 @@ function removeDealLineItems(dealId, products) {
             sendEcommerceRequest(
               'line_item_delete',
               'DELETE',
-              'https://api.hubapi.com/crm/v3/objects/line_items/' +
-                currentLineItems[l].id,
+              'https://api.hubapi.com/crm/v3/objects/line_items/' + currentLineItems[l].id,
               ''
             );
           }
@@ -842,10 +821,7 @@ function associateDealToLineItem(dealId, lineItemId) {
 }
 
 function getCurrentLineItems(dealId) {
-  const url =
-    'https://api.hubapi.com/crm/v3/objects/deals/' +
-    dealId +
-    '/associations/line_items';
+  const url = 'https://api.hubapi.com/crm/v3/objects/deals/' + dealId + '/associations/line_items';
 
   logRequest('get_current_line_item_ids', 'GET', url, '');
 
@@ -857,12 +833,7 @@ function getCurrentLineItems(dealId) {
     },
     ''
   ).then((result) => {
-    logResponse(
-      result.statusCode,
-      result.headers,
-      result.body,
-      'get_current_line_item_ids'
-    );
+    logResponse(result.statusCode, result.headers, result.body, 'get_current_line_item_ids');
 
     if (result.statusCode >= 200 && result.statusCode < 300) {
       const currentLineItemsIds = JSON.parse(result.body).results;
@@ -872,8 +843,7 @@ function getCurrentLineItems(dealId) {
           inputs: currentLineItemsIds,
           properties: ['hs_product_id', 'hs_sku']
         };
-        const url =
-          'https://api.hubapi.com/crm/v3/objects/line_items/batch/read';
+        const url = 'https://api.hubapi.com/crm/v3/objects/line_items/batch/read';
 
         logRequest('get_current_line_items', 'POST', url, bodyData);
 
@@ -885,12 +855,7 @@ function getCurrentLineItems(dealId) {
           },
           JSON.stringify(bodyData)
         ).then((result) => {
-          logResponse(
-            result.statusCode,
-            result.headers,
-            result.body,
-            'get_current_line_items'
-          );
+          logResponse(result.statusCode, result.headers, result.body, 'get_current_line_items');
 
           if (result.statusCode >= 200 && result.statusCode < 300) {
             return JSON.parse(result.body).results;
@@ -951,8 +916,7 @@ function createOrUpdateDeal() {
         dealId = sendEcommerceRequest(
           'deal_update',
           'PATCH',
-          'https://api.hubapi.com/crm/v3/objects/deals/' +
-            parsedBody.results[0].id,
+          'https://api.hubapi.com/crm/v3/objects/deals/' + parsedBody.results[0].id,
           dealData
         );
       } else {
@@ -997,12 +961,7 @@ function createOrUpdateContact() {
     },
     JSON.stringify(bodyData)
   ).then((result) => {
-    logResponse(
-      result.statusCode,
-      result.headers,
-      result.body,
-      'contact_search'
-    );
+    logResponse(result.statusCode, result.headers, result.body, 'contact_search');
 
     if (result.statusCode >= 200 && result.statusCode < 300) {
       const parsedBody = JSON.parse(result.body);
@@ -1013,12 +972,9 @@ function createOrUpdateContact() {
       };
 
       if (data.email) contactData.properties.email = data.email;
-      if (data.contactFirstName)
-        contactData.properties.firstname = data.contactFirstName;
-      if (data.contactLastName)
-        contactData.properties.lastname = data.contactLastName;
-      if (data.contactPhone)
-        contactData.properties.mobilephone = data.contactPhone;
+      if (data.contactFirstName) contactData.properties.firstname = data.contactFirstName;
+      if (data.contactLastName) contactData.properties.lastname = data.contactLastName;
+      if (data.contactPhone) contactData.properties.mobilephone = data.contactPhone;
 
       if (makeInteger(parsedBody.total) > 0) {
         const contactID = parsedBody.results[0].id;
@@ -1077,8 +1033,7 @@ function createOrUpdateCustomObject() {
     properties: {}
   };
   for (let i in customObjectParameters) {
-    bodyData.properties[customObjectParameters[i].key] =
-      customObjectParameters[i].value;
+    bodyData.properties[customObjectParameters[i].key] = customObjectParameters[i].value;
   }
 
   logRequest('createCustomObject', 'POST', url, bodyData);
@@ -1126,12 +1081,7 @@ function associateCustomObjectWithContact(customObjectId, contactId) {
   sendHttpRequest(
     url,
     (statusCode, headers, body) => {
-      logResponse(
-        statusCode,
-        headers,
-        body,
-        'associateCustomObjectWithContact'
-      );
+      logResponse(statusCode, headers, body, 'associateCustomObjectWithContact');
 
       if (statusCode >= 200 && statusCode < 300) {
         data.gtmOnSuccess();
@@ -1171,6 +1121,10 @@ function identifyVisitorEvent() {
     JSON.stringify(bodyData)
   );
 }
+
+/*==============================================================================
+  Helpers
+==============================================================================*/
 
 function getRequestHeaders() {
   return {
@@ -1494,4 +1448,5 @@ setup: |-
 ___NOTES___
 
 Created on 02/05/2021, 09:39:23
+
 

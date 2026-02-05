@@ -1,5 +1,8 @@
 homepage: 'https://stape.io/'
+documentation: 'https://github.com/stape-io/hubspot-tag'
 versions:
+  - sha: b15bfc8acc7c69ac94e6795ecdb617034a26bbfc
+    changeNotes: Updated consent section.
   - sha: 8b14d492116d07d82478da9277ba7d107649ec95
     changeNotes: Fix endpoint to associate Custom Object and Contact.
   - sha: c7d260bbedb081ed41c4aaa84e3810d210102e41

@@ -23,3 +23,6 @@ More detailed description of [setting up the HubSpot tag in the sGTM](https://st
 ## Open Source
 
 HubSpot Tag for GTM Server Side is developed and maintained by [Stape Team](https://stape.io/) under the Apache 2.0 license.
+
+### GTM Gallery Status
+🟢 [Listed](https://tagmanager.google.com/gallery/#/owners/stape-io/templates/hubspot-tag)

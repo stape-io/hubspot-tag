@@ -63,19 +63,20 @@ ___TEMPLATE_PARAMETERS___
       },
       {
         "value": "identifyVisitor",
-        "displayValue": "Visitor Identification"
+        "displayValue": "Generate Visitor Identification Token cookie"
       }
     ],
     "simpleValueType": true,
     "defaultValue": "trackCustomBehavioralEvent",
-    "alwaysInSummary": true
+    "alwaysInSummary": true,
+    "help": "\u003cb\u003eGenerate Visitor Identification Token cookie\u003c/b\u003e\n\u003cbr/\u003e\nThe tag will set the \u003ci\u003e__hs_visitor_id_token\u003c/i\u003e cookie with the token value. You must pass this value in your HubSpot Javascript SDK when loading the chat widget.\n\u003cbr/\u003e\n\u003ca href\u003d\"https://developers.hubspot.com/docs/api-reference/legacy/conversations/visitor-identification/guide\"\u003eLearn more\u003c/a\u003e about the Visitor Identification Token."
   },
   {
     "type": "TEXT",
     "name": "apiKey",
     "displayName": "Private app access token",
     "simpleValueType": true,
-    "help": "You can find more information about Private app access token by \n \u003ca href\u003d\"https://developers.hubspot.com/docs/api/private-apps\" target\u003d\"_blank\"\u003ethis link\u003c/a\u003e.",
+    "help": "You can find more information about Private app access token \n \u003ca href\u003d\"https://developers.hubspot.com/docs/api/private-apps\" target\u003d\"_blank\"\u003ehere\u003c/a\u003e.",
     "valueValidators": [
       {
         "type": "NON_EMPTY"
@@ -166,7 +167,7 @@ ___TEMPLATE_PARAMETERS___
   },
   {
     "type": "GROUP",
-    "name": "visitorIdentificationParamtersGroup",
+    "name": "visitorIdentificationParametersGroup",
     "displayName": "Visitor Additional Information",
     "groupStyle": "ZIPPY_OPEN_ON_PARAM",
     "subParams": [
@@ -521,34 +522,6 @@ ___TEMPLATE_PARAMETERS___
         "defaultValue": "optional"
       }
     ]
-  },
-  {
-    "displayName": "Logs Settings",
-    "name": "logsGroup",
-    "groupStyle": "ZIPPY_CLOSED",
-    "type": "GROUP",
-    "subParams": [
-      {
-        "type": "RADIO",
-        "name": "logType",
-        "radioItems": [
-          {
-            "value": "no",
-            "displayValue": "Do not log"
-          },
-          {
-            "value": "debug",
-            "displayValue": "Log to console during debug and preview"
-          },
-          {
-            "value": "always",
-            "displayValue": "Always log to console"
-          }
-        ],
-        "simpleValueType": true,
-        "defaultValue": "debug"
-      }
-    ]
   }
 ]
 
@@ -557,21 +530,22 @@ ___SANDBOXED_JS_FOR_SERVER___
 
 const encodeUriComponent = require('encodeUriComponent');
 const getAllEventData = require('getAllEventData');
-const getContainerVersion = require('getContainerVersion');
+const getCookieValues = require('getCookieValues');
 const getRequestHeader = require('getRequestHeader');
+const getTimestampMillis = require('getTimestampMillis');
 const JSON = require('JSON');
-const logToConsole = require('logToConsole');
 const makeInteger = require('makeInteger');
 const makeNumber = require('makeNumber');
 const makeTableMap = require('makeTableMap');
 const Promise = require('Promise');
 const sendHttpRequest = require('sendHttpRequest');
+const setCookie = require('setCookie');
+const sha256Sync = require('sha256Sync');
+const templateDataStorage = require('templateDataStorage');
 
 /*==============================================================================
 ==============================================================================*/
 
-const isLoggingEnabled = determinateIsLoggingEnabled();
-const traceId = getRequestHeader('trace-id');
 const eventData = getAllEventData();
 
 if (!isConsentGivenOrNotRequired()) {
@@ -623,13 +597,9 @@ function trackPageViewEvent() {
     url = url + '&sd=' + encodeUriComponent(eventData.screen_resolution);
   if (eventData.page_encoding) url = url + '&cs=' + encodeUriComponent(eventData.page_encoding);
 
-  logRequest('page_view', 'GET', url, '');
-
   sendHttpRequest(
     url,
     (statusCode, headers, body) => {
-      logResponse(statusCode, headers, body, 'page_view');
-
       if (statusCode >= 200 && statusCode < 300) {
         data.gtmOnSuccess();
       } else {
@@ -659,13 +629,9 @@ function trackCustomBehavioralEvent() {
   if (data.customBehavioralEventOccurredAt)
     bodyData.occurredAt = data.customBehavioralEventOccurredAt;
 
-  logRequest(data.customBehavioralEventEventName, 'POST', url, bodyData);
-
   sendHttpRequest(
     url,
     (statusCode, headers, body) => {
-      logResponse(statusCode, headers, body, data.customBehavioralEventEventName);
-
       if (statusCode >= 200 && statusCode < 300) {
         data.gtmOnSuccess();
       } else {
@@ -823,8 +789,6 @@ function associateDealToLineItem(dealId, lineItemId) {
 function getCurrentLineItems(dealId) {
   const url = 'https://api.hubapi.com/crm/v3/objects/deals/' + dealId + '/associations/line_items';
 
-  logRequest('get_current_line_item_ids', 'GET', url, '');
-
   return sendHttpRequest(
     url,
     {
@@ -833,8 +797,6 @@ function getCurrentLineItems(dealId) {
     },
     ''
   ).then((result) => {
-    logResponse(result.statusCode, result.headers, result.body, 'get_current_line_item_ids');
-
     if (result.statusCode >= 200 && result.statusCode < 300) {
       const currentLineItemsIds = JSON.parse(result.body).results;
 
@@ -845,8 +807,6 @@ function getCurrentLineItems(dealId) {
         };
         const url = 'https://api.hubapi.com/crm/v3/objects/line_items/batch/read';
 
-        logRequest('get_current_line_items', 'POST', url, bodyData);
-
         return sendHttpRequest(
           url,
           {
@@ -855,8 +815,6 @@ function getCurrentLineItems(dealId) {
           },
           JSON.stringify(bodyData)
         ).then((result) => {
-          logResponse(result.statusCode, result.headers, result.body, 'get_current_line_items');
-
           if (result.statusCode >= 200 && result.statusCode < 300) {
             return JSON.parse(result.body).results;
           } else {
@@ -888,8 +846,6 @@ function createOrUpdateDeal() {
     ]
   };
 
-  logRequest('deal_search', 'POST', url, bodyData);
-
   return sendHttpRequest(
     url,
     {
@@ -898,8 +854,6 @@ function createOrUpdateDeal() {
     },
     JSON.stringify(bodyData)
   ).then((result) => {
-    logResponse(result.statusCode, result.headers, result.body, 'deal_search');
-
     if (result.statusCode >= 200 && result.statusCode < 300) {
       let dealId;
       const parsedBody = JSON.parse(result.body);
@@ -951,8 +905,6 @@ function createOrUpdateContact() {
     ]
   };
 
-  logRequest('contact_search', 'POST', url, bodyData);
-
   return sendHttpRequest(
     url,
     {
@@ -961,8 +913,6 @@ function createOrUpdateContact() {
     },
     JSON.stringify(bodyData)
   ).then((result) => {
-    logResponse(result.statusCode, result.headers, result.body, 'contact_search');
-
     if (result.statusCode >= 200 && result.statusCode < 300) {
       const parsedBody = JSON.parse(result.body);
       const contactData = {
@@ -1000,8 +950,6 @@ function createOrUpdateContact() {
 }
 
 function sendEcommerceRequest(eventName, method, url, bodyData) {
-  logRequest(eventName, method, url, bodyData);
-
   return sendHttpRequest(
     url,
     {
@@ -1010,8 +958,6 @@ function sendEcommerceRequest(eventName, method, url, bodyData) {
     },
     JSON.stringify(bodyData)
   ).then((result) => {
-    logResponse(result.statusCode, result.headers, result.body, eventName);
-
     if (result.statusCode === 204) {
       return true;
     } else if (result.statusCode >= 200 && result.statusCode < 300) {
@@ -1036,13 +982,9 @@ function createOrUpdateCustomObject() {
     bodyData.properties[customObjectParameters[i].key] = customObjectParameters[i].value;
   }
 
-  logRequest('createCustomObject', 'POST', url, bodyData);
-
   sendHttpRequest(
     url,
     (statusCode, headers, body) => {
-      logResponse(statusCode, headers, body, 'createCustomObject');
-
       if (statusCode >= 200 && statusCode < 300) {
         const responseData = JSON.parse(body);
         const customObjectId = responseData.id; // This is the Object ID.
@@ -1075,14 +1017,10 @@ function associateCustomObjectWithContact(customObjectId, contactId) {
     '/' +
     encodeUriComponent(data.customObjectAndContactAssociationTypeId);
 
-  logRequest('associateCustomObjectWithContact', 'PUT', url, '');
-
   // Send the association request
   sendHttpRequest(
     url,
     (statusCode, headers, body) => {
-      logResponse(statusCode, headers, body, 'associateCustomObjectWithContact');
-
       if (statusCode >= 200 && statusCode < 300) {
         data.gtmOnSuccess();
       } else {
@@ -1104,14 +1042,41 @@ function identifyVisitorEvent() {
     email: data.email
   };
 
-  logRequest('identifyVisitorEvent', 'POST', url, bodyData);
+  const tokenFromCookie = getCookieValues('__hs_visitor_id_token')[0];
+  const cacheKey = sha256Sync(url + JSON.stringify(bodyData));
+  const tokenInfoFromCache = templateDataStorage.getItemCopy(cacheKey);
+  const now = getTimestampMillis();
+  if (
+    tokenInfoFromCache &&
+    tokenInfoFromCache.expiresAt > now &&
+    tokenInfoFromCache.token === tokenFromCookie
+  ) {
+    data.gtmOnSuccess();
+    return;
+  }
 
   sendHttpRequest(
     url,
     (statusCode, headers, body) => {
-      logResponse(statusCode, headers, body, 'identifyVisitorEvent');
-
-      if (statusCode >= 200 && statusCode < 300) {
+      const parsedBody = JSON.parse(body || '{}');
+      if (statusCode === 200 && parsedBody.token) {
+        setCookie(
+          '__hs_visitor_id_token',
+          parsedBody.token,
+          {
+            domain: 'auto',
+            samesite: 'Lax',
+            path: '/',
+            secure: true,
+            httpOnly: false, // Must be accessible by JS
+            'max-age': 60 * 60 * 11 // 11 hours (token is valid for 12 hours according to docs)
+          },
+          false
+        );
+        templateDataStorage.setItemCopy(cacheKey, {
+          token: parsedBody.token,
+          expiresAt: getTimestampMillis() + 60 * 60 * 11 * 1000 // 11 hour (token is valid for 12 hours according to docs)
+        });
         data.gtmOnSuccess();
       } else {
         data.gtmOnFailure();
@@ -1133,58 +1098,6 @@ function getRequestHeaders() {
   };
 }
 
-function logResponse(statusCode, headers, body, eventName) {
-  log({
-    Name: 'HubSpot',
-    Type: 'Response',
-    TraceId: traceId,
-    EventName: eventName,
-    ResponseStatusCode: statusCode,
-    ResponseHeaders: headers,
-    ResponseBody: body
-  });
-}
-
-function logRequest(eventName, method, url, bodyData) {
-  log({
-    Name: 'HubSpot',
-    Type: 'Request',
-    TraceId: traceId,
-    EventName: eventName,
-    RequestMethod: method,
-    RequestUrl: url,
-    RequestBody: bodyData
-  });
-}
-
-function log(logObject) {
-  if (isLoggingEnabled) {
-    logToConsole(JSON.stringify(logObject));
-  }
-}
-
-function determinateIsLoggingEnabled() {
-  const containerVersion = getContainerVersion();
-  const isDebug = !!(
-    containerVersion &&
-    (containerVersion.debugMode || containerVersion.previewMode)
-  );
-
-  if (!data.logType) {
-    return isDebug;
-  }
-
-  if (data.logType === 'no') {
-    return false;
-  }
-
-  if (data.logType === 'debug') {
-    return isDebug;
-  }
-
-  return data.logType === 'always';
-}
-
 function isConsentGivenOrNotRequired() {
   if (data.adStorageConsent !== 'required') return true;
   if (eventData.consent_state) return !!eventData.consent_state.ad_storage;
@@ -1196,37 +1109,6 @@ function isConsentGivenOrNotRequired() {
 ___SERVER_PERMISSIONS___
 
 [
-  {
-    "instance": {
-      "key": {
-        "publicId": "logging",
-        "versionId": "1"
-      },
-      "param": [
-        {
-          "key": "environments",
-          "value": {
-            "type": 1,
-            "string": "all"
-          }
-        }
-      ]
-    },
-    "clientAnnotations": {
-      "isEditedByUser": true
-    },
-    "isRequired": true
-  },
-  {
-    "instance": {
-      "key": {
-        "publicId": "read_container_data",
-        "versionId": "1"
-      },
-      "param": []
-    },
-    "isRequired": true
-  },
   {
     "instance": {
       "key": {
@@ -1276,21 +1158,6 @@ ___SERVER_PERMISSIONS___
           "value": {
             "type": 2,
             "listItem": [
-              {
-                "type": 3,
-                "mapKey": [
-                  {
-                    "type": 1,
-                    "string": "headerName"
-                  }
-                ],
-                "mapValue": [
-                  {
-                    "type": 1,
-                    "string": "trace-id"
-                  }
-                ]
-              },
               {
                 "type": 3,
                 "mapKey": [
@@ -1364,6 +1231,118 @@ ___SERVER_PERMISSIONS___
       "isEditedByUser": true
     },
     "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "get_cookies",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "cookieAccess",
+          "value": {
+            "type": 1,
+            "string": "specific"
+          }
+        },
+        {
+          "key": "cookieNames",
+          "value": {
+            "type": 2,
+            "listItem": [
+              {
+                "type": 1,
+                "string": "__hs_visitor_id_token"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "set_cookies",
+        "versionId": "1"
+      },
+      "param": [
+        {
+          "key": "allowedCookies",
+          "value": {
+            "type": 2,
+            "listItem": [
+              {
+                "type": 3,
+                "mapKey": [
+                  {
+                    "type": 1,
+                    "string": "name"
+                  },
+                  {
+                    "type": 1,
+                    "string": "domain"
+                  },
+                  {
+                    "type": 1,
+                    "string": "path"
+                  },
+                  {
+                    "type": 1,
+                    "string": "secure"
+                  },
+                  {
+                    "type": 1,
+                    "string": "session"
+                  }
+                ],
+                "mapValue": [
+                  {
+                    "type": 1,
+                    "string": "__hs_visitor_id_token"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "*"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  },
+                  {
+                    "type": 1,
+                    "string": "any"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "clientAnnotations": {
+      "isEditedByUser": true
+    },
+    "isRequired": true
+  },
+  {
+    "instance": {
+      "key": {
+        "publicId": "access_template_storage",
+        "versionId": "1"
+      },
+      "param": []
+    },
+    "isRequired": true
   }
 ]
 
@@ -1397,7 +1376,7 @@ scenarios:
       assertThat(options).isEqualTo(expectedOptions);
       assertThat(callback).isFunction();
       assertThat(JSON.parse(body)).isEqualTo(expectedBody);
-      callback(200);
+      callback(200, {}, '{"token":"123abc"}');
     });
 
     runCode(mockData);
@@ -1447,6 +1426,8 @@ setup: |-
 
 ___NOTES___
 
-Created on 02/05/2021, 09:39:23
+2026-05-25 Change Notes:
+ - Logging removal.
 
+Created on 02/05/2021, 09:39:23
 
